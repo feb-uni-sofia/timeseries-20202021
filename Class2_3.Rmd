@@ -1,0 +1,140 @@
+---
+title: "Class3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Time series analysis class 2
+
+Notation:
+$$
+y: y_1, y_2,\ldots,y_T
+$$
+
+$$
+y_{t - 1}: \text{ first lag}
+$$
+$$
+y_t = y_{t - 1} + u_{t}
+$$
+## Purely random process (white noise)
+
+$$
+u_{t} \sim N(0, \sigma^2), \quad t=1,\ldots,T
+$$
+$$
+E(u_t) = 0\\
+Var(u_{t}) = \sigma^2
+$$
+
+Generate 100 values from a standard normal distribution (i.e. $\sigma^2  = 1$).
+
+```{r}
+randomValues <- rnorm(100)
+timeIndex <- seq.Date(as.Date("2018-10-10"), by = "day", length.out = 100)
+u <- xts(randomValues, timeIndex)
+plot(u)
+mean(u)
+```
+
+
+$$
+X \sim N(\mu, \sigma^2)\\
+\text{ roughly } 95\% \text{ of the realisations of X are expected to be in the interval} \\
+[\mu - 2\sigma, \mu + 2\sigma] 
+$$
+$$
+X \sim N(0, 1)\\
+[ - 2, 2]
+$$
+
+
+```{r}
+uL1 <- lag(u)
+combinedSeries <- cbind(u, uL1)
+plot(as.data.frame(uL1)[, 1], as.data.frame(u)[, 1], xlab = "u_{t - 1}", ylab = "u_{t}", main = "Scatterplot of u_t and u_{t - 1}")
+```
+
+
+```{r}
+hist(as.data.frame(u)[, 1], main = "Histogram of u")
+```
+
+## Sample (empirical) covariance
+
+$$
+x: x_{1}, x_{2}, \ldots, x_{T}\\
+y: y_{1}, y_{2}, \ldots, y_{T}\\
+
+$$
+
+```{r}
+x <- 1:50
+noise <- 7 * rnorm(50)
+```
+
+```{r}
+y <- (1000 * x) + noise
+```
+
+$$
+y_t = x_{t} + u_{t}
+$$
+
+$$
+E(y_t) = E(x_t + u_t) = E(x_{t}) + \underbrace{E(u_{t})}_{0} = E(x_t)
+$$
+
+```{r}
+plot(x, y)
+mean(x)
+mean(y)
+abline(v = mean(x), col = 3, lwd = 2)
+abline(h = mean(y), col = 2, lwd = 2)
+```
+```{r}
+cov(x, y)
+```
+
+$$
+(x_t - \overline{x})(y_{t} - \overline{y}) > 0 \text{ for points in the top right part}\\
+(x_t - \overline{x})(y_{t} - \overline{y}) > 0 \text{ for points in the bottom left part}\\
+(x_t - \overline{x})(y_{t} - \overline{y}) < 0 \text{ for points in the bottom right and top left parts}
+$$
+
+$$
+Cov(x, y) = \frac{1}{T}\sum_{t = 1}^{T}(x_t - \overline{x})(y_{t} - \overline{y})
+$$
+
+
+$$
+\overline{y} = \frac{1}{T}\sum_{t = 1}^{T}y_{t} \\
+(y_t - \overline{y}) > 0 \text{ for points above the red line}\\
+(y_t - \overline{y}) < 0 \text{ for points below the red line}\\
+(x_t - \overline{x}) > 0 \text{ for points to the right of the green line}\\
+(x_t - \overline{x}) < 0 \text{ for points to the left of the green line}
+$$
+
+$$
+s^2(x) = \frac{1}{T - 1}\sum_{t = 1}^{T}(x_t - \overline{x})^2\\
+s^2(y) = \frac{1}{T - 1}\sum_{t = 1}^{T}(y_t - \overline{y})^2\\
+
+\rho(x, y) = \frac{Cov(x, y)}{\sqrt{s^2(x)s^2(y)}} \text{ correlation coefficient}\\
+-1 \leq \rho(x, y) \leq 1
+$$
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,116 @@
+---
+title: "Class3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Time series analysis class 2
+
+
+## Purely random process (white noise)
+
+E: expected value
+Var: variance 
+Cov: covariance
+
+$$
+u_1, u_2, u_3,\ldots,u_{T}\\
+u_{t} \sim N(0, \sigma^2) \\
+E(u_{t}u_{t - 1}) = 0\\
+$$
+```{r}
+## Generate values from the standard normal distribution: N(0, 1)
+normalValues <- rnorm(100)
+timeIndex <- seq.Date(as.Date("2010-10-10"), by = "day", length.out = 100)
+u <- xts(normalValues, timeIndex)
+```
+
+```{r}
+plot(u)
+```
+
+
+```{r}
+uL1 <- lag(u)
+combinedSeries <- cbind(u, uL1)
+```
+
+```{r}
+plot(as.data.frame(uL1)[, 1], as.data.frame(u)[, 1], xlab = "u_{t - 1}", ylab = "u_{t}")
+```
+
+For two random variables $X$ and $Y$,
+
+$$
+Cov(X, Y) := E((X - EX)(Y - EY))
+$$
+
+## Empirical covariance
+
+
+$$
+t = 1,\ldots,T\\
+y_1, y_2,\ldots,y_{T}\\
+x_1, x_2,\ldots,x_{T}\\
+Cov(x, y) = \frac{1}{T} \sum_{t = 1}^{T}(x_t - \overline{x})(y_t - \overline{y})
+$$
+
+Sample variance of x
+$$
+Cov(x, x) = \frac{1}{T} \sum_{t = 1}^{T}(x_t - \overline{x})^2
+$$
+```{r}
+noise <- 5 * rnorm(50)
+x <- 1:50
+```
+
+```{r}
+y <- noise
+plot(x, y)
+abline(v = mean(x), col = 3, lwd = 2)
+abline(h = mean(y), col = 2, lwd = 2)
+cov(x, y)
+cor(x, y)
+```
+$$
+\overline{x} = \frac{1}{T}\sum_{t =1 }^{T} x_{t}\\
+Cov(x, y) = \frac{1}{T} \sum_{t = 1}^{T}(x_t - \overline{x})(y_t - \overline{y})
+$$
+## Correlation coefficient
+
+$$
+s(x): \quad \text{Standard deviation of x}\\
+s(y): \quad \text{Standard deviation of y}\\
+\rho(x, y) = \frac{Cov(x, y)}{s(x)s(y)}\\\
+-1 \leq \rho(x, y) \leq 1 \\
+S^2(x) = \frac{1}{T}\sum_{t = 1}^{T}(x_{t} - \overline{x})^2 \\
+\sqrt{S^2(x)} = s(x): \quad \text{standard deviation of x}
+$$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
