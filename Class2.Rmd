@@ -7,6 +7,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(xts)
+```
+
 ## Time series analysis class 2
 
 Notation:
@@ -68,7 +72,6 @@ hist(as.data.frame(u)[, 1], main = "Histogram of u")
 $$
 x: x_{1}, x_{2}, \ldots, x_{T}\\
 y: y_{1}, y_{2}, \ldots, y_{T}\\
-
 $$
 
 ```{r}
@@ -77,7 +80,7 @@ noise <- 7 * rnorm(50)
 ```
 
 ```{r}
-y <- (1000 * x) + noise
+y <- -(1000 * x) + noise
 ```
 
 $$
@@ -125,3 +128,61 @@ s^2(y) = \frac{1}{T - 1}\sum_{t = 1}^{T}(y_t - \overline{y})^2\\
 \rho(x, y) = \frac{Cov(x, y)}{\sqrt{s^2(x)s^2(y)}} \text{ correlation coefficient}\\
 -1 \leq \rho(x, y) \leq 1
 $$
+$$
+\rho(x, y)
+$$
+
+$$
+y_{1}, y_{2}\ldots,y_{T}\\
+y_{0}, y_{1}\ldots,y_{T - 1} : \text{first lag of } y_{t}: y_{t - 1}
+$$
+
+## Time series structure
+
+- level / trend of the time series
+- fluctuations (variance)
+- auto-covariance / auto-correlation structure
+
+$$
+y_{t}\\
+\rho_{1} = Corr(y_{t}, y_{t - 1}) \text{ first order autocorrelation coefficient}\\
+\rho_{2} = Corr(y_{t}, y_{t - 2}) \text{ second order autocorrelation coefficient}\\
+\rho_{\tau} = Corr(y_{t}, y_{t - \tau})
+$$
+
+$$
+\rho_{0} = Corr(y_{t}, y_{t})
+$$
+
+
+```{r}
+randomValues <- rnorm(100)
+timeIndex <- seq.Date(as.Date("2018-10-10"), by = "day", length.out = 100)
+u <- xts(randomValues, timeIndex)
+## plot(u)
+## mean(u)
+acf(u)
+```
+
+```{r}
+## Auto-correlation function
+
+```
+$$
+y_{t} = y_{t} \\
+Corr(y_{t}, y_{t}) = 1
+$$
+## Blue dotted lines in the autocorrelation plot
+- 95% confidence interval for the autocorrelations
+
+$$
+
+$$
+
+$$
+a,b \in R\\
+b > 0\\
+y_{t} = a + b x_{t}, \quad \rho_{x, y} = 1\\
+y_{t} = a - b x_{t}, \quad \rho_{x, y} = -1
+$$
+
