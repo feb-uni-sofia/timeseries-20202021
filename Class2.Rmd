@@ -74,18 +74,35 @@ x: x_{1}, x_{2}, \ldots, x_{T}\\
 y: y_{1}, y_{2}, \ldots, y_{T}\\
 $$
 
+$$
+u_{t} \sim N(0, 1) \text{ Standard normal distribution}\\
+y_{t} = x_{t} + 7 u_{t}
+$$
+## Expected value of $y_t$
+
+$$
+E(y_t) = E(x_t + 7u_t) = E(x_t) + E(7u_t) = x_{t} + E(7u_t) = x_{t} + 7\underbrace{E(u_t)}_{0} = x_t \\
+E(y_t) = x_t \\
+Var(7u_t) = 7^2 \underbrace{Var(u_t)}_{1} = 49
+$$
+
+$$
+E(y_t) = \underbrace{E(x_t)}_{x_t} + \underbrace{E(7u_t)}_{0} \\
+E(u_t) = 0 \text{ by the definition of the normal distribution with mean 0} \\
+E(7u_t) = 7E(u_t) = 0 \text{ because 7 is a constant (non-random)}\\
+Var(7u_t) = 7^2Var(u_t) = 7^2\times 1
+$$
+
+
+
 ```{r}
 x <- 1:50
-noise <- 7 * rnorm(50)
+noise <- 20*rnorm(50)
 ```
 
 ```{r}
-y <- -(1000 * x) + noise
+y <- 100 * x + noise
 ```
-
-$$
-y_t = x_{t} + u_{t}
-$$
 
 $$
 E(y_t) = E(x_t + u_t) = E(x_{t}) + \underbrace{E(u_{t})}_{0} = E(x_t)
@@ -102,6 +119,8 @@ abline(h = mean(y), col = 2, lwd = 2)
 cov(x, y)
 ```
 
+
+
 $$
 (x_t - \overline{x})(y_{t} - \overline{y}) > 0 \text{ for points in the top right part}\\
 (x_t - \overline{x})(y_{t} - \overline{y}) > 0 \text{ for points in the bottom left part}\\
@@ -109,7 +128,7 @@ $$
 $$
 
 $$
-Cov(x, y) = \frac{1}{T}\sum_{t = 1}^{T}(x_t - \overline{x})(y_{t} - \overline{y})
+Cov(x, y) = \frac{1}{T - 1}\sum_{t = 1}^{T}(x_t - \overline{x})(y_{t} - \overline{y})
 $$
 
 
@@ -128,9 +147,142 @@ s^2(y) = \frac{1}{T - 1}\sum_{t = 1}^{T}(y_t - \overline{y})^2\\
 \rho(x, y) = \frac{Cov(x, y)}{\sqrt{s^2(x)s^2(y)}} \text{ correlation coefficient}\\
 -1 \leq \rho(x, y) \leq 1
 $$
+
 $$
-\rho(x, y)
+y_{t} =  - x_{t}
 $$
+
+$$
+\rho(x, y) = \rho(x, x) = \frac{Cov(x, x)}{\sqrt{s^2(x)s^2(x)}} = \frac{s^2(x)}{s^2(x)} = 1
+$$
+
+$$
+Cov(x, x) = \frac{1}{T - 1}\sum_{t = 1}^{T}(x_t - \overline{x})^2 = Var(x) = s^2(x)
+$$
+$$
+y_t = bx_{t} + a, \quad b,a \in R\\
+b > 0: \rho(x, y) = 1\\
+b < 0: \rho(x, y) = -1 \\
+$$
+
+$$
+y_t, y_{t - 1}, y_{t - 2},\ldots, y_{t - k}
+$$
+
+$$
+\gamma_0 = Cov(y_t, y_{t}) = Var(y_t) = s^2(x)\\
+\gamma_{1} = Cov(y_{t}, y_{t - 1}) \text{ first order autocovariance }\\
+\gamma_{2} = Cov(y_{t}, y_{t - 2}) \text{ second order autocovariance } \\
+\gamma_{3} =Cov(y_{t}, y_{t - 3}) \text{ third order autocovariance } \\
+\vdots \\
+\gamma_{k} =Cov(y_{t}, y_{t - k}) \text{ k-th order autocovariance } \\
+$$
+$$
+\rho_{0}= \rho(y_t, y_{t}) = 1 \\
+\rho_{1} = \rho(y_{t}, y_{t - 1}) \text{ first order autocorrelation }\\
+\rho_{2} = \rho(y_{t}, y_{t - 2}) \text{ second order autocorrelation } \\
+\rho_{3} =\rho(y_{t}, y_{t - 3}) \text{ third order autocorrelation } \\
+\vdots \\
+\rho_{k} =\rho(y_{t}, y_{t - k}) \text{ k-th order autocorrelation } \\
+$$
+
+$$
+\rho_1 = \frac{\gamma_1}{\gamma_0} \\
+\rho_2 = \frac{\gamma_2}{\gamma_0} \\
+\vdots\\
+\rho_k = \frac{\gamma_k}{\gamma_0}\\
+$$
+$$
+\text{Assume that } s^2(y_t) = s^2(y_{t - 1}) \\
+\rho_{1} = \rho(y_t, y_{t - 1}) = \frac{Cov(y_t, y_{t - 1})}{\sqrt{s^2(y_t)s^2(y_{t})}} = \frac{Cov(y_t, y_{t - 1})}{s^2(y_t)} = \frac{\gamma_1}{\gamma_0}
+$$
+
+$$
+u_t \sim N(0, 1) \\
+u_{t} \text{ and } u_{t - 1} \text{ are not correlated}
+$$
+
+```{r}
+library(xts)
+n <- 100
+uRaw <- rnorm(n) ## Generate 100 observations from a standard normal distribution
+u <-xts(uRaw, order.by = seq.Date(as.Date("2020-11-09"), by = "day", length.out = n)) 
+acf(u)
+acf(u, plot = FALSE)
+```
+## Exercise
+
+$$
+x: x_1, x_2, x_3\\
+x: (1, 3, 5)\\
+
+\overline{x} = 9 / 3 = 3\\
+\text{ Sample variance: } \gamma_0 = \frac{1}{3 - 1}[(1 - 3)^2 + (3 - 3)^2 + (5 - 3)^2] = \frac{1}{2}(2^2 + 0 +2^2 ) = \frac{1}{2}2*4 = 4 \\
+\text{ Sample covariance: }\gamma_1 = ? \\
+\text{ Sample correlation: } \rho_1 = ?
+$$
+$$
+\gamma_1 = Cov(x_t, x_{t - 1}) = \frac{1}{T - 1}\sum_{t = 1}^{T}(x_{t} - \overline{x})(x_{t - 1} - \overline{x})
+$$
+$$
+\gamma_1 = \frac{1}{3 - 1}[(3 - 3)(1 - 3) + (5 - 3)(3 - 3)] = 0\\
+\rho_1 = \frac{\gamma_1}{\gamma_0} = \frac{0}{4} = 0
+$$
+
+$$
+s^2(x) = \frac{1}{T - 1}\sum_{t = 1}^{T}(x_t - \overline{x})^2\\
+\rho(x, y) = \frac{Cov(x, y)}{\sqrt{s^2(x)s^2(y)}} \text{ correlation coefficient}\\
+-1 \leq \rho(x, y) \leq 1
+$$
+
+$$
+\rho(x, y) = \rho(x, x) = \frac{Cov(x, x)}{\sqrt{s^2(x)s^2(x)}} = \frac{s^2(x)}{s^2(x)} = 1
+$$
+
+```{r}
+x <- c(1, 3, 5)
+var(x)
+```
+
+```{r}
+n <- 100
+uRaw <- 100 * runif(n) ## Generate 100 observations from a standard normal distribution
+u <-xts(uRaw, order.by = seq.Date(as.Date("2020-11-09"), by = "day", length.out = n)) 
+uL1 <- lag(u)
+plot(as.data.frame(uL1)[, 1], as.data.frame(u)[, 1])
+abline(h = 0)
+abline(v = 0)
+```
+
+```{r}
+plot(u)
+```
+
+## Structure of the data (realm of the data)
+- (sample) Mean value of the series (calculated from actual data)
+- (sample) Variance of the series (calculated from actual data)
+- (sample) Autocorrelation structure (calculated from actual data)
+$$
+\rho_{1}, \rho_{2}, \ldots, \rho_{k}
+$$
+
+## Structure of the model (realm of mathematical models)
+
+- Expected value of the series (model)
+- Variance of the series (model)
+- Autocorrelation structure (model)
+
+
+
+```{r}
+plot(u)
+```
+```{r}
+uL1 <- lag(u)
+plot(as.data.frame(uL1)[, 1], as.data.frame(u)[, 1])
+```
+
+
 
 $$
 y_{1}, y_{2}\ldots,y_{T}\\
@@ -185,4 +337,18 @@ b > 0\\
 y_{t} = a + b x_{t}, \quad \rho_{x, y} = 1\\
 y_{t} = a - b x_{t}, \quad \rho_{x, y} = -1
 $$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
