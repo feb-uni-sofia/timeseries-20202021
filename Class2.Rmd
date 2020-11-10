@@ -199,7 +199,7 @@ $$
 
 $$
 u_t \sim N(0, 1) \\
-u_{t} \text{ and } u_{t - 1} \text{ are not correlated}
+u_{t} \text{ and } u_{t - k} \text{ are not correlated for each } k.
 $$
 
 ```{r}
@@ -208,7 +208,7 @@ n <- 100
 uRaw <- rnorm(n) ## Generate 100 observations from a standard normal distribution
 u <-xts(uRaw, order.by = seq.Date(as.Date("2020-11-09"), by = "day", length.out = n)) 
 acf(u)
-acf(u, plot = FALSE)
+## acf(u, plot = FALSE)
 ```
 ## Exercise
 
@@ -337,6 +337,45 @@ b > 0\\
 y_{t} = a + b x_{t}, \quad \rho_{x, y} = 1\\
 y_{t} = a - b x_{t}, \quad \rho_{x, y} = -1
 $$
+
+## ARIMA
+
+$$
+u_{t} \sim WN(\sigma^2) \implies \\
+u_{t} \sim N(0, \sigma^2) \\
+E(u_t) = 0\\
+Var(u_t) = \sigma^2\\
+E(u_tu_{t - k}) = 0, k \neq t \text{ uncorrelated } \\
+$$
+
+
+$$
+u_{t} \sim WN(\sigma^2)\\
+y_{t} = y_{t - 1} + u_{t}\\
+y_{t - 1} = y_{t - 2} + u_{t - 1}\\
+y_{t - 2} = y_{t - 3} + u_{t - 2}\\
+\vdots\\
+y_{2} = y_{1} + u_{2}\\
+y_{1} = y_0 + u_{1}
+$$
+
+$$
+y_2 = y_0 + u_1 + u_2\\
+y_3 = y_0 + u_1 + u_2 + u_{3}\\
+y_4 = y_0 + u_1 + u_2 + u_{3} + u_4 \\
+\vdots\\
+y_t = y_0 + u_1 + u_2 + u_3 + u_4 + \ldots + u_{t - 1} + u_t\\
+y_t = y_0 + \sum_{i = 1}^{t}u_{i}\\
+\text{assume that } y_0 = 0 \\
+y_t = \sum_{i = 1}^{t}u_{i}\\
+
+E(y_t) = E(\sum_{i = 1}^{t}u_{i}) = \\\
+$$
+
+
+
+
+
 
 
 
