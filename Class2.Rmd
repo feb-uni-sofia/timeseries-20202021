@@ -284,28 +284,96 @@ $$
 We say that a process is variance stationary if the variance does not depend on the t-index.
 
 
-## Homework
+
+## Covariance
+
 $$
-y_{t} = \delta + y_{t - 1} + u_{t}, \quad u_{t} \sim WN(\sigma^2) \text{ random walk with drift}\\
-\delta > 0 \text{ :constant, i.e non-random}\\
-E(y_{t}) = ?
+Var(y_{t}):= E(y_t - E(y_t))(y_{t} - E(y_t)) = E(y_t - E(y_t))^2\\
+\text{if } E(y_t) = 0\\
+E(y_{t}^2) = E(y_{t}y_{t})\\
+Var(y_{t - 1}) = E(y_{t - 1}y_{t - 1})
 $$
+
+$$
+y_t = y_{t - 1} + u_{t}, \quad u_{t} \sim WN(\sigma^2)\\
+Cov(y_{t}, y_{t - 1}) : = E[(y_t - E(y_{t}))(y_{t - 1} - E(y_{t - 1}))]\\
+Cov(y_{t}, y_{t - 1}) = E(y_ty_{t - 1})\\
+Cov(y_{t}, y_{t - 1}) = E\left[(y_{t - 1} + u_t) y_{t - 1}\right]\\
+Cov(y_{t}, y_{t - 1}) = E\left[y_{t - 1}y_{t - 1} + u_t y_{t - 1}\right]\\
+Cov(y_{t}, y_{t - 1}) = \underbrace{E\left[y_{t - 1}y_{t - 1}\right]}_{Var(y_{t-1}) = (t - 1)\sigma^2} + E\left[u_t y_{t - 1}\right]\\
+Cov(y_{t}, y_{t - 1}) = (t - 1) \sigma^2 + E\left(u_{t}\sum_{i = 1}^{t - 1}u_{i}\right)\\
+Cov(y_{t}, y_{t - 1}) = (t - 1) \sigma^2 + E\left(u_t(u_1 + u_2 + \ldots,u_{t -2} + u_{t - 1})\right)\\
+Cov(y_{t}, y_{t - 1}) = (t - 1) \sigma^2 + E\left(u_{t}u_{1} + u_{t}u_{2}  + \ldots + u_{t}u_{t -2} + u_{t}u_{t - 1}\right)\\
+Cov(y_{t}, y_{t - 1}) = (t - 1) \sigma^2 + \underbrace{E(u_{t}u_{1})}_{=0} + \underbrace{E(u_{t}u_{2})}_{=0}  + \ldots + \underbrace{E(u_{t}u_{t -2})}_{=0} + \underbrace{E(u_{t}u_{t - 1})}_{=0}\\
+Cov(y_{t}, y_{t - 1}) = (t - 1)\sigma^2
+$$
+
 $$
 E(\delta) = \delta \\
 Var(\delta) = 0
 $$
 
 
+## Model structure:
+
+$$
+E(y_t) = ?\\
+Var(y_t) = ? \\
+Cov(y_{t}, y_{t - k}) = ?
+$$
 
 
+$$
+y_{t} = \delta + \alpha y_{t - 1} + u_{t}, \quad u_{t} \sim WN(\sigma^2); \delta, \alpha \in R
+$$
+$$
+y_{t} = \delta + \alpha y_{t - 1} + u_{t}\\
+y_{t - 1} = \delta + \alpha y_{t - 2} + u_{t - 1}\\
+y_{t - 2} = \delta + \alpha y_{t - 3} + u_{t - 3}\\
+\vdots\\
+y_{2} = \delta + \alpha y_{1} + u_{2}\\
+y_{1} = \delta + \alpha y_{0} + u_{1}\\
+$$
+$$
+y_{2} = \delta + \alpha (\delta + \alpha y_{0} + u_1) + u_{2}\\
+= \delta + \alpha\delta + \alpha^2y_{0} + \alpha u_{1} + u_{2}\\
+y_3 = \delta + \alpha y_{2} + u_{3}\\
+y_{3} = \delta + \alpha (\delta + \alpha\delta + \alpha^2y_{0} + \alpha u_{1} + u_{2}) + u_{3}\\
+y_{3}=\delta + \alpha\delta + \alpha^2\delta + \alpha^3y_{0}  + \alpha^2u_{1} + \alpha u_{2} + u_{3}\\
+\vdots\\
+y_{t} = \delta(1 + \alpha + \alpha^2 +\ldots +\alpha^{t-1}) + \alpha^t y_{0} + u_{t} + \alpha u_{t - 1} + \alpha^2 u_{t - 2} + \ldots + \alpha^{t - 1}u_{1}
+$$
+$$
+\alpha = 1, \delta = 0, y_{0} = 0\\
+y_{t} = u_{t} + u_{t - 1} + u_{t - 2} + \ldots + u_{1}\\
+--\\
+\alpha = 0.8, \delta = 0, y_{0} = 0\\
+y_{t} = u_{t} + 0.8 u_{t - 1} + (0.8)^2 u_{t - 2} + \ldots + (0.8)^{t - 1}u_{1}\\
+--\\
+\alpha = 1.1, \delta = 0, y_{0} = 0\\
+y_{t} =u_{t} + 1.1 u_{t - 1} + (1.1)^2 u_{t - 2} + \ldots + (1.1)^{t - 1}u_{1}
+$$
+$$
+1 + r + r^2 + r^3 + \ldots + r^n = \frac{1}{1 - r}\\
+|r| < 1
+$$
+
+$$
+S_{n} = 1 + r + r^2 + r^3 + \ldots + r^{n - 1} + r^n\\
+rS_{n} = r (1 + r + r^2 + r^3 + \ldots + r^{n - 1} + r^n) = r + r^2 + r^3 + \ldots + r^{n + 1}\\
+S_{n} - rS_{n} = S_{n}(1 - r) = 1 - r^{n + 1}\\
+S_{n} = \frac{1 - r^{n + 1}}{1 - r}\\
+\lim_{n \to \infty} S_{n} = \frac{1 - \lim_{n \to \infty} r^{n + 1}}{1 - r} = \frac{1}{1 - r}\\
+\text{if } |r| < 1
+$$
 
 
-
-
-
-
-
-
+## Homework
+$$
+y_{t} = \delta + y_{t - 1} + u_{t}, \quad u_{t} \sim WN(\sigma^2) \text{ random walk with drift}\\
+\delta > 0 \text{ :constant, i.e non-random}\\
+E(y_{t}) = ?
+$$
 
 
 
