@@ -637,10 +637,129 @@ y_{3} = ?
 $$
 
 
+## ARIMA(1, 0, 0)
 
+Autoregressive processes of first order.
 
+$$
+y_{t} = \delta + \alpha y_{t - 1} + u_t, \quad u_{t} \sim WN(\sigma^2)\\
+\implies E(u_t) = 0, Var(u_t) = \sigma^2, Cov(u_t, u_{t - k}) = 0, k \neq 0
+$$
+$$
+E(y_t) = \alpha E(y_{t - 1}) + E(u_t)\\
+E(y_t) \neq \alpha y_{t}\\
+$$
+$$
+E(y_{t}) = ?\\
+Var(y_{t}) = ?\\
+Cov(y_{t}, y_{t - k}) = ?; \rho(y_{t}, y_{t - k}) = ?\\
+$$
+$$
+\delta = 0, \alpha = 0.5
+$$
 
+$$
+y_{t} = \delta + \alpha y_{t - 1} + u_{t}
+$$
 
+$$
+L: \text{Lag operator}\\
+Ly_{t} = y_{t - 1}\\
+L^2y_{t} = L(Ly_t) = L(y_{t - 1}) = y_{t - 2}\\
+L\delta = \delta
+$$
+
+$$
+y_t = \delta  + \alpha Ly_{t} + u_{t}\\
+y_{t} - \alpha Ly_{t} = \delta +  u_{t}\\
+(1 - \alpha L)y_{t} = \delta + u_{t} \\
+y_{t} = \frac{\delta}{1 - \alpha L} + \frac{u_t}{1 - \alpha L}
+$$
+
+$$
+\frac{\delta}{1 - \alpha} + \frac{u_{t}}{1 - \alpha L}
+$$
+$$
+\frac{1}{1 - \alpha}
+$$
+$$
+S_{n} = 1 + \alpha + \alpha^2 + \alpha^3 + \alpha^4 + \ldots + \alpha^n\\
+\alpha S_{n} = \alpha + \alpha^2 + \alpha^3 + \alpha^4 + \alpha^5 + \ldots + \alpha^n + \alpha^{n + 1}\\
+S_{n} - \alpha S_{n} = 1 - \alpha^{n + 1}\\
+S_{n} = \frac{1 -\alpha^{n + 1}}{1 - \alpha}\\
+\lim_{n \to \infty} = \alpha^{n + 1} = 0 \text{ for } -1 < \alpha < 1 \\
+\implies \lim_{n \to \infty} S_{n} = \frac{1}{1 - \alpha}
+$$
+$$
+\frac{1}{1 - \alpha L} = 1 + \alpha L + \alpha^2 L^2 + \alpha^3 L^3 \ldots\\
+\text{ for } -1 < \alpha < 1
+$$
+
+$$
+y_{t} = \frac{\delta}{1 - \alpha} + \frac{u_{t}}{1 - \alpha L}\\
+y_{t} = \frac{\delta}{1 - \alpha} + (1  + \alpha L + \alpha^2L^2 + \ldots)u_{t}\\
+y_{t} = \frac{\delta}{1 - \alpha} + u_{t}  + \alpha Lu_{t} + \alpha^2L^2u_{t} + \ldots\\
+y_{t} = \frac{\delta}{1 - \alpha} + u_{t}  + \alpha u_{t - 1} + \alpha^2u_{t - 2} + \ldots\\
+y_{t} = \frac{\delta}{1 - \alpha} + \sum_{i = 0}^{\infty}\alpha^{i}u_{t - i} \\
+$$
+$$
+E(y_{t}) = E\left(\frac{\delta}{1 - \alpha} + \sum_{i = 0}^{\infty}\alpha^{i}u_{t - i} \right)\\
+E(y_{t}) = E\left(\frac{\delta}{1 - \alpha}\right) + \sum_{i = 0}^{\infty}\alpha^{i}\underbrace{E(u_{t - i})}_{=0} \\
+E(y_{t}) = \frac{\delta}{1 - \alpha}\\
+$$
+
+$$
+Var(y_{t}) = E(y_{t} - E(y_{t}))^2 = E\left(y_t - \frac{\delta}{1 - \alpha}\right)^2 \\
+= E\left(\frac{\delta}{1 - \alpha} + \sum_{i = 0}^{\infty}\alpha^{i}u_{t - i} - \frac{\delta}{1 - \alpha}\right)^2\\
+= E\left(\sum_{i  = 0}^{\infty}\alpha^iu_{t - i}\right)^2 = E\left((u_{t}  + \alpha u_{t - 1} + \alpha^2u_{t - 2} + \ldots)(u_{t}  + \alpha u_{t - 1} + \alpha^2u_{t - 2} + \ldots)\right) = \\
+E\left(u_tu_t + \alpha u_{t}u_{t-1} + \alpha^2 u_{t}u_{t-2} + \ldots + \alpha u_{t}u_{t - 1} + \alpha^2u_{t-1}{u_{t-1}} + \ldots \right) =\\
+\underbrace{E(u_{t}u_{t})}_{=\sigma^2} + \alpha \underbrace{E(u_{t}u_{t - 1})}_{=0} + \alpha^2E(u_tu_{t - 2}) + \ldots +\alpha E(u_{t}u_{t - 1}) + \alpha^2 \underbrace{E(u_{t-1}{u_{t-1}}}_{=\sigma^2}) + \ldots + \alpha^4\underbrace{E(u_{t - 2}u_{t - 2})}_{=\sigma^2} + \ldots =\\
+\sigma^2 + \alpha^2\sigma^2 + \alpha^4\sigma^2 + \alpha^6 \sigma^2 + \ldots\\
+\sigma^2(1 + \alpha^2 + \alpha^4 + \alpha^6 + \ldots)\\
+\text{Let } a = \alpha^2\\
+\sigma^2(1 + a + a^2 + a^3 + \ldots) = \sigma^2\frac{1}{1 - a} = \frac{1}{1 - \alpha^2}\\
+\implies \\
+Var(y_t) = \frac{\sigma^2}{1 - \alpha^2}
+$$
+
+$$
+E(u_t) = 0\\
+Var(u_{t}) = \sigma^2\\
+Var(u_{t}) = E(u_{t} - E(u_t))^2 = E(u_t^2) = E(u_tu_t)\\
+Cov(u_{t}, u_{t - k}) = E(u_{t} - E(u_t))(u_{t - k} - E(u_{t - k})) = E(u_tu_{t - k}) = 0
+$$
+
+$$
+Cov(y_{t}, y_{t - 1}) = E(y_{t} - E(y_t)(y_{t-1} - E(y_{t - 1})) = \\
+E( \sum_{i = 0}^{\infty}\alpha^{i}u_{t - i})(\sum_{i = 0}^{\infty}\alpha^{i}u_{t -1 - i})= \\
+E(y_{t}) = E\left((u_t + \alpha^1u_{t - 1} + \alpha^2 u_{t - 2} +\ldots)(u_{t - 1} + \alpha u_{t - 2} + \ldots)\right) = \\
+E(\alpha u_{t - 1}^2 + \alpha^3u_{t-2}^2 + \ldots) = \\
+\alpha E(u_{t- 1}^2) + \alpha^3 E(u_{t-2}^2) + \ldots = \\
+\alpha\sigma^2 + \alpha^3\sigma^2 + \ldots = \\
+\sigma^2(\alpha + \alpha^3 + \alpha^5 + \alpha^7 +  \ldots) = \\
+\sigma^2\alpha(1 + \alpha^2 + \alpha^4 + \alpha^6 + \ldots) = \\
+\sigma^2\alpha\frac{1}{1 - \alpha^2} = \\
+Cov(y_{t}, y_{t - 1}) = \alpha\frac{\sigma^2}{1 - \alpha^2}\\
+\rho_{1} = \rho(y_{t}, y_{t - 1}) := \frac{Cov(y_{t}, y_{t - 1})}{Var(y_{t})} = \frac{\alpha\frac{\sigma^2}{1 - \alpha^2}}{\frac{\sigma^2}{1 - \alpha^2}} \implies \\
+\rho_{1} = \alpha
+$$ 
+
+$$
+y_t(1 - \alpha L) = u_{t}
+1 - \alpha L :\\ lag-polynomial\\
+1 - \alpha L = 0
+$$
+root of the lag-polynomial
+
+## Homework:
+
+$$
+Cov(y_{t}, y_{t - 2}) = \alpha^2\frac{\sigma^2}{1 - \alpha^2}
+$$
+$$
+y_{t} = \delta + \alpha_1y_{t - 1} + \alpha_{2}y_{t - 2} + u_{t}\\
+(1 - \alpha_1 L - \alpha_2 L^2)y_{t} = u_{t}
+$$
 
 
 
