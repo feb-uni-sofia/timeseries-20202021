@@ -756,12 +756,175 @@ root of the lag-polynomial
 $$
 Cov(y_{t}, y_{t - 2}) = \alpha^2\frac{\sigma^2}{1 - \alpha^2}
 $$
+
 $$
 y_{t} = \delta + \alpha_1y_{t - 1} + \alpha_{2}y_{t - 2} + u_{t}\\
 (1 - \alpha_1 L - \alpha_2 L^2)y_{t} = u_{t}
 $$
 
 
+
+## Time series plots
+
+$$
+y_{t} = \alpha y_{t - 1} + u_{t}, \quad u_t \sim WN(\sigma^2)
+$$
+
+```{r}
+n <- 1000
+timeIndex <- seq(as.Date("2020-10-10"), by ="day", length.out = n)
+```
+
+## AR(1)
+
+$$
+y_{t} = 0.8 y_{t - 1} + u_{t}, \quad u_t \sim WN(1) : \quad AR(1)\\
+y_{t - 1} = 0.8 y_{t - 2} + u_{t-1}
+$$
+
+```{r}
+xAr1.1 <- arima.sim(model = list(ar = c(0.8)), n = n)
+```
+
+```{r}
+plot(xAr1.1)
+abline(h = mean(xAr1.1))
+acf(xAr1.1)
+pacf(xAr1.1)
+```
+$$
+y_{t} = -0.8 y_{t - 1} + u_{t}, \quad u_t \sim WN(1) : \quad AR(1)\\
+$$
+
+
+```{r}
+xAr1.2 <- arima.sim(model = list(ar = c(-0.8)), n = n)
+```
+
+```{r}
+?arima.sim
+plot(xAr1.2)
+abline(h = mean(xAr1.2))
+acf(xAr1.2)
+pacf(xAr1.2)
+```
+
+## Random walk
+
+$$
+y_{t} = y_{t - 1} + u_{t}, u_{t} \sim WN(1)\\
+y_{t} = \sum_{i = 1}^{t}u_{i}\\
+y_1 = u_1\\
+y_2 = u_1 + u_2\\
+y_3 = u_1 + u_2 + u_3\\
+\vdots\\
+$$
+```{r}
+library(xts)
+xNorm <- rnorm(n)
+xRw <- cumsum(xNorm)
+rwSeries <- xts(xRw, order.by = timeIndex)
+```
+
+
+```{r}
+plot(rwSeries)
+acf(rwSeries)
+pacf(rwSeries)
+```
+
+$$
+L = B\\
+By_{t} = y_{t - 1}\\
+B^2y_{t} = B(By_{t}) = By_{t - 1} = y_{t - 2}\\
+B\delta = \delta\\
+y_{t} = \alpha y_{t - 1} + u_{t}, \quad u_t \sim WN(1) : \quad AR(1)\\
+y_{t} = \alpha By_{t} + u_{t}\\
+y_{t} - \alpha By_{t} = u_{t}\\
+(1 - \alpha B)y_{t} = u_{t}\\
+y_{t} = \frac{u_{t}}{(1 - \alpha B)}\\
+y_{t} = \underbrace{\sum_{i = 0}^{\infty}\phi_{i}u_{t - i}}_{MA(\infty)}
+$$
+
+$$
+1 - \alpha B = 0
+$$
+
+## Roots of the lag polynomial
+
+-> Characteristic equation
+
+$$
+1B^{0} - \alpha B^{1} = 0\\
+\lambda = 1/B \implies \lambda = B^{-1}\\
+\lambda  - \alpha = 0\\
+\lambda_{1} = \alpha\\
+\text{if the roots of the characteristic equation are less than 1 in absolute value}\\
+\text{then the process is stationary}
+$$
+## AR(2)
+
+$$
+y_{t} = \alpha_1y_{t - 1} + \alpha_2y_{t - 2} + u_{t}\\
+y_{t} = \alpha_1By_{t} + \alpha_2B^{2}y_{t} + u_{t}\\
+y_{t} - \alpha_1By_{t} - \alpha_2B^{2}y_{t} = u_{t}\\
+(1 - \alpha_1B - \alpha_2B^{2})y_{t} = u_{t}
+$$
+
+$$
+1 - \alpha_1B - \alpha_2B^{2}\\
+\lambda^2 - \alpha_1\lambda - \alpha_2 = 0 \quad \text{Characteristic equation}\\
+\lambda_{1, 2} = ?
+$$
+$$
+y_{t} = 0.7y_{t - 1} + 0.2y_{t - 2} + u_{t}
+$$
+$$
+\lambda^2 - 0.7\lambda - 0.2 = 0\\
+\lambda_{1} = 0.2178, \lambda_{2} = 0.9178\\
+-1< \lambda_1 < 1\\
+-1< \lambda_2 < 1\\
+\implies \text{stationary process}
+$$
+```{r}
+?polyroot
+lambda12 <- polyroot(c(-0.2, -0.7, 1))
+(-0.2178908)^2 -(0.7*-0.2178908) -0.2
+```
+
+$$
+y_{t} = 0.7y_{t - 1} - 0.2y_{t - 2} + u_{t}
+$$
+$$
+1 - \alpha_1B - \alpha_2B^{2}\\
+\lambda^2 - 0.7\lambda + 0.2 = 0 \quad \text{Characteristic equation}\\
+\lambda_{1, 2} = ?
+$$
+```{r}
+polyroot(c(0.2, -0.7, 1))
+abs(polyroot(c(0.2, -0.7, 1)))
+```
+$$
+|\lambda_{1,2}| < 1 \implies \text{ Stationary process}
+$$
+```{r}
+xAr2.1 <- arima.sim(model = list(ar = c(0.8, -0.3)), n = 100000)
+ARMAacf(ar = c(0.8, -0.3))
+```
+
+```{r}
+plot(xAr2.1)
+acf(xAr2.1, plot = FALSE)
+
+```
+
+
+
+$$
+\rho_1 = \alpha_1 + \alpha_2\rho_{1}\\
+\implies (1 - \alpha_2)\rho_1 = \alpha_1 \implies \rho_1 = \frac{\alpha_1}{1 - \alpha_2}\\
+\rho_2 = \alpha_1\rho_1 + \alpha_2\rho_{0}
+$$
 
 
 
