@@ -771,23 +771,45 @@ y_{t} = \alpha y_{t - 1} + u_{t}, \quad u_t \sim WN(\sigma^2)
 $$
 
 ```{r}
-n <- 1000
-timeIndex <- seq(as.Date("2020-10-10"), by ="day", length.out = n)
+n <- 100
 ```
 
 ## AR(1)
 
 $$
 y_{t} = 0.8 y_{t - 1} + u_{t}, \quad u_t \sim WN(1) : \quad AR(1)\\
-y_{t - 1} = 0.8 y_{t - 2} + u_{t-1}
 $$
+We rewrite the process using the lag-operator (B).
+$$
+By_{t} := y_{t - 1} \quad \text{Definition}\\
+y_{t} = 0.8By_{t} + u_{t}\\
+(1 - 0.8B)y_{t} = u_{t}\\
+y_{t} = \frac{u_{t}}{1 - 0.8B}\\
+y_{t} = \underbrace{\sum_{i = 0}^{\infty}\phi_{i}u_{t - i}}_{MA(\infty)} \quad \text{stationary?}
+$$
+Moving average models are always stationary as linear combinations of white noise.
+
+
+## Roots of the lag polynomial
+
+-> Characteristic equation
+
+$$
+1B^{0} - \alpha B^{1} = 0\\
+\lambda = 1/B \implies \lambda = B^{-1}\\
+\lambda  - \alpha = 0\\
+\lambda_{1} = \alpha\\
+\text{if the roots of the characteristic equation are less than 1 in absolute value}\\
+\text{then the process is stationary}
+$$
+
 
 ```{r}
 xAr1.1 <- arima.sim(model = list(ar = c(0.8)), n = n)
 ```
 
 ```{r}
-plot(xAr1.1)
+plot(xAr1.1, ylab="Value", main="Simulation from an AR(1) process with alpha = 0.8")
 abline(h = mean(xAr1.1))
 acf(xAr1.1)
 pacf(xAr1.1)
@@ -823,6 +845,7 @@ $$
 library(xts)
 xNorm <- rnorm(n)
 xRw <- cumsum(xNorm)
+timeIndex <- seq(as.Date("2020-10-10"), by ="day", length.out = n)
 rwSeries <- xts(xRw, order.by = timeIndex)
 ```
 
@@ -846,25 +869,12 @@ y_{t} = \frac{u_{t}}{(1 - \alpha B)}\\
 y_{t} = \underbrace{\sum_{i = 0}^{\infty}\phi_{i}u_{t - i}}_{MA(\infty)}
 $$
 
-$$
-1 - \alpha B = 0
-$$
 
-## Roots of the lag polynomial
 
--> Characteristic equation
-
-$$
-1B^{0} - \alpha B^{1} = 0\\
-\lambda = 1/B \implies \lambda = B^{-1}\\
-\lambda  - \alpha = 0\\
-\lambda_{1} = \alpha\\
-\text{if the roots of the characteristic equation are less than 1 in absolute value}\\
-\text{then the process is stationary}
-$$
 ## AR(2)
 
 $$
+B^2y_{t} = B(By_t) = By_{t - 1} = y_{t - 2}\\
 y_{t} = \alpha_1y_{t - 1} + \alpha_2y_{t - 2} + u_{t}\\
 y_{t} = \alpha_1By_{t} + \alpha_2B^{2}y_{t} + u_{t}\\
 y_{t} - \alpha_1By_{t} - \alpha_2B^{2}y_{t} = u_{t}\\
@@ -876,9 +886,22 @@ $$
 \lambda^2 - \alpha_1\lambda - \alpha_2 = 0 \quad \text{Characteristic equation}\\
 \lambda_{1, 2} = ?
 $$
+
+## Example AR(2)
 $$
 y_{t} = 0.7y_{t - 1} + 0.2y_{t - 2} + u_{t}
 $$
+has a characteristic equation
+$$
+\lambda^2 - 0.7\lambda - 0.2 = 0
+$$
+```{r}
+?polyroot
+lambda12 <- polyroot(c(-0.2, -0.7, 1))
+(-0.2178908)^2 -(0.7*-0.2178908) -0.2
+abs(lambda12) < 1
+```
+
 $$
 \lambda^2 - 0.7\lambda - 0.2 = 0\\
 \lambda_{1} = 0.2178, \lambda_{2} = 0.9178\\
@@ -886,35 +909,36 @@ $$
 -1< \lambda_2 < 1\\
 \implies \text{stationary process}
 $$
-```{r}
-?polyroot
-lambda12 <- polyroot(c(-0.2, -0.7, 1))
-(-0.2178908)^2 -(0.7*-0.2178908) -0.2
-```
+
 
 $$
 y_{t} = 0.7y_{t - 1} - 0.2y_{t - 2} + u_{t}
 $$
+
 $$
 1 - \alpha_1B - \alpha_2B^{2}\\
 \lambda^2 - 0.7\lambda + 0.2 = 0 \quad \text{Characteristic equation}\\
 \lambda_{1, 2} = ?
 $$
+
 ```{r}
-polyroot(c(0.2, -0.7, 1))
-abs(polyroot(c(0.2, -0.7, 1)))
+lambda12 <- polyroot(c(0.2, -0.7, 1))
+lambda12
+abs(lambda12)
 ```
 $$
 |\lambda_{1,2}| < 1 \implies \text{ Stationary process}
 $$
+
 ```{r}
-xAr2.1 <- arima.sim(model = list(ar = c(0.8, -0.3)), n = 100000)
-ARMAacf(ar = c(0.8, -0.3))
+?arima.sim
+xAr2.1 <- arima.sim(model = list(ar = c(0.7, -0.2)), n = n)
 ```
 
 ```{r}
 plot(xAr2.1)
-acf(xAr2.1, plot = FALSE)
+acf(xAr2.1)
+pacf(xAr2.1)
 
 ```
 
@@ -926,9 +950,70 @@ $$
 \rho_2 = \alpha_1\rho_1 + \alpha_2\rho_{0}
 $$
 
+## Moving average 
+
+## Example MA(1)
+
+$$
+y_{t} = u_{t} - \beta_{1}u_{t - 1}, \quad u_{t} \sim WN(\sigma^2)
+$$
+$$
+Ey_{t} = E(u_t) - \beta_1E(u_{t - 1}) = 0.
+$$
+$$
+Var(y_{t}) = Var(u_{t} - \beta u_{t - 1}) = Var(u_{t}) + Var(\beta_1 u_{t - 1}) \quad \text{ becase } u_{t} \text{ and } u_{t -1} \text{ are not correlated}
+$$
+
+$$
+Var(u_{t}) + Var(\beta_1 u_{t - 1}) = \sigma^2 + \beta_1^2\sigma^2 = (1 + \beta_1^2)\sigma^2\\
+Var(y_{t}) = (1 + \beta_1^2)\sigma^2
+$$
 
 
+Question
+$$
+Var(y_t) = 2\\
+\sigma^2 = 1\\
 
+\beta_1 = 1\\
+\beta_1 = -1
+$$
+Invertibility condition?
+
+$$
+y_{t} = u_{t} -\beta_1Bu_{t}\\
+y_{t} = (1 - \beta_1B)u_{t}\\
+\underbrace{\sum_{i=0}^{\infty}\phi_{i}y_{t - i}}_{AR(\infty)} = \frac{y_{t}}{(1 - \beta_1B)} = u_{t}\\
+\text{if } |\beta_1| < 1
+$$
+## Example MA(2)
+
+$$
+y_{t} = u_{t} - \beta_1u_{t - 1} - \beta_2u_{t - 2}\\
+y_{t} = (1 - \beta_1B - \beta_2B^2)u_{t}
+$$
+Characteristic equation of the lag polynomial?
+
+$$
+(1 - \beta_1B - \beta_2B^2)\\
+\lambda^2 - \beta_1\lambda -\beta_2 = 0\\
+|\lambda_{1,2}| < 1
+$$
+## Example MA(2)
+
+$$
+y_{t} = u_{t} - 0.7u_{t - 1} - 0.2u_{t - 2}\\
+$$
+
+```{r}
+masim <- arima.sim(model = list(ma = c(0.7)), n = 1000)
+```
+
+```{r}
+plot(masim)
+acf(masim)
+pacf(masim)
+```
 
 
 
