@@ -805,7 +805,7 @@ $$
 
 
 ```{r}
-xAr1.1 <- arima.sim(model = list(ar = c(0.8)), n = n)
+xAr1.1 <- arima.sim(model = list(ar = c(0.8, -0.2, 0.1)), n = n)
 ```
 
 ```{r}
@@ -957,9 +957,11 @@ $$
 $$
 y_{t} = u_{t} - \beta_{1}u_{t - 1}, \quad u_{t} \sim WN(\sigma^2)
 $$
+
 $$
 Ey_{t} = E(u_t) - \beta_1E(u_{t - 1}) = 0.
 $$
+
 $$
 Var(y_{t}) = Var(u_{t} - \beta u_{t - 1}) = Var(u_{t}) + Var(\beta_1 u_{t - 1}) \quad \text{ becase } u_{t} \text{ and } u_{t -1} \text{ are not correlated}
 $$
@@ -1014,6 +1016,111 @@ plot(masim)
 acf(masim)
 pacf(masim)
 ```
+
+## AR(p) models
+
+
+### Bulgaria GDP series (level)
+
+```{r}
+
+library(xts)
+# a) Read data
+gdp <- read.csv('https://raw.githubusercontent.com/feb-uni-sofia/timeseries-20202021/main/data/gdp_bg_qrt_2000-2017.csv')
+
+# b) Create time series object
+timeIndex <- as.yearqtr(gdp$Index, format = '%YQ%q')
+gdpSeries <- xts(gdp$GDP, order.by = timeIndex)
+```
+
+
+```{r}
+plot(gdpSeries)
+acf(gdpSeries)
+```
+
+### Bulgaria GDP series (growth rates)
+
+
+$$
+y_{1}, y_{2}, y_{3},\ldots,y_{T}\\
+g_{1}, g_{2}, g_{3},\ldots,g_{T}\\
+g_{t} = \frac{y_{t} - y_{t - 1}}{y_{t - 1}} \text{ growth date} \\ 
+g_{t} = \log(y_{t}) - \log(y_{t - 1}) \text{ continuous growth date: quarter to quarter growth rate} \\
+g_{t} = \log(y_{t}) - \log(y_{t - 4}) \text{ continuous growth: quarter to same quarter (previous year)}
+$$
+
+```{r}
+growthSeries <- log(gdpSeries) - log(lag(gdpSeries, k = 4))
+```
+
+
+```{r}
+plot(growthSeries)
+```
+
+
+## Fit an AR(p) process
+
+```{r}
+## mean(growthSeries, na.rm = TRUE)
+acf(growthSeries, na.action = na.omit)
+pacf(growthSeries, na.action = na.omit)
+```
+$$
+y_{t} = \delta + \alpha y_{t - 1} + u_{t}, u_{t} \sim WN(\sigma^2)
+$$
+$$
+E(y_t) = E(\delta) + \alpha E(y_{t - 1}) + E(u_t)\\
+\mu = \delta + \alpha \mu \quad \text{ for } |\alpha| < 1\\
+\mu = \frac{\delta}{1 - \alpha}
+$$
+$$
+\hat{y}_{t} = \hat{\delta} + \hat{\alpha}\hat{y}_{t - 1}, \hat{\sigma}^2 = ...
+$$
+
+$$
+\frac{1}{T}\sum_{t = 1}^{T}(y_{t} - \hat{y}_{t})^2
+$$
+
+```{r}
+## Similar to lm()
+## ARIMA(p, d, q)
+fitAR1 <- arima(growthSeries, order = c(1, 0, 0)) ## AR(1)
+fitAR1 ## ar1: alpha
+```
+$$
+\hat{\alpha} = 0.6993\\
+se(\alpha^2) = 0.0904\\
+P(\alpha \in [\hat{\alpha} - 2se(\hat{\alpha}), \hat{\alpha} + 2se(\hat{\alpha})]) \approx 95\%
+$$
+
+
+
+```{r}
+xAr1 <- arima.sim(n = 71, model = list(ar = c(0.7)))
+arima(xAr1, order = c(1, 0, 0))
+```
+
+## Goodness of fit
+
+$$
+r_{t} = y_{t} - \hat{y}_{t} \quad \text{ residuals}\\
+r_{t} \neq u_{t}
+$$
+
+```{r}
+tsdiag(fitAR1)
+```
+
+
+
+
+
+
+
+
+
 
 
 
