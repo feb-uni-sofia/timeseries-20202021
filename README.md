@@ -3,6 +3,7 @@
 [Assignment 1](https://firebasestorage.googleapis.com/v0/b/uni-sofia.appspot.com/o/timeseries2018%2Fassignments%2FAssignment_1.pdf?alt=media)
 
 [Compiled class notes (work in progress)](https://feb-uni-sofia.github.io/timeseries-20202021/)
+
 [Econometrics script](https://feb-uni-sofia.github.io/econometrics-script/)
 
 ## Software
