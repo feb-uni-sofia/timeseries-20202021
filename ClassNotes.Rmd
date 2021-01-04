@@ -1,0 +1,1372 @@
+---
+title: "Class3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(xts)
+```
+
+## Time series analysis class 2
+
+Let us denote the realisations of a time series process with
+$$
+y: y_1, y_2,\ldots,y_T
+$$
+
+where $y_1$ is the first value of the series and $y_T$ is the last value of the series.
+
+The first lag of the series is defined as 
+
+$$
+y_{t - 1}: \text{ first lag}
+$$
+
+
+## Purely random process (white noise)
+
+Let $u_t$ be an uncorrelated, normally distributed zero mean process with constant variance $\sigma^2$.
+
+$$
+u_{t} \sim N(0, \sigma^2), \quad t=1,\ldots,T
+$$
+
+We will refer to this process as a white noise.
+
+$$
+E(u_t) = 0\\
+Var(u_{t}) = \sigma^2
+$$
+
+## Simulation white noise
+
+Generate 100 values from a standard normal distribution (i.e. $\sigma^2  = 1$) and create an arbitrary time index (here 100 days starting from 2018-10-10).
+
+```{r}
+randomValues <- rnorm(100)
+timeIndex <- seq.Date(as.Date("2018-10-10"), by = "day", length.out = 100)
+u <- xts(randomValues, timeIndex)
+plot(u)
+mean(u)
+```
+
+$$
+X \sim N(\mu, \sigma^2)\\
+\text{ roughly } 95\% \text{ of the realisations of X are expected to be in the interval} \\
+[\mu - 2\sigma, \mu + 2\sigma] 
+$$
+$$
+X \sim N(0, 1)\\
+[ - 2, 2]
+$$
+
+```{r}
+uL1 <- lag(u)
+combinedSeries <- cbind(u, uL1)
+plot(as.data.frame(uL1)[, 1], as.data.frame(u)[, 1], xlab = "u_{t - 1}", ylab = "u_{t}", main = "Scatterplot of u_t and u_{t - 1}")
+```
+
+```{r}
+hist(as.data.frame(u)[, 1], main = "Histogram of u")
+```
+
+## Sample (empirical) covariance
+
+Let $x$ and $y$ be two random variables with $T$ realisations.
+$$
+x: x_{1}, x_{2}, \ldots, x_{T}\\
+y: y_{1}, y_{2}, \ldots, y_{T}\\
+$$
+
+## Expected value of $y_t$
+
+$$
+E(y_t) = E(x_t + 7u_t) = E(x_t) + E(7u_t) = x_{t} + E(7u_t) = x_{t} + 7\underbrace{E(u_t)}_{0} = x_t \\
+E(y_t) = x_t \\
+Var(7u_t) = 7^2 \underbrace{Var(u_t)}_{1} = 49
+$$
+
+$$
+E(y_t) = \underbrace{E(x_t)}_{x_t} + \underbrace{E(7u_t)}_{0} \\
+E(u_t) = 0 \text{ by the definition of the normal distribution with mean 0} \\
+E(7u_t) = 7E(u_t) = 0 \text{ because 7 is a constant (non-random)}\\
+Var(7u_t) = 7^2Var(u_t) = 7^2\times 1
+$$
+
+
+
+```{r}
+x <- 1:50
+noise <- 20*rnorm(50)
+```
+
+```{r}
+y <- 100 * x + noise
+```
+
+$$
+E(y_t) = E(x_t + u_t) = E(x_{t}) + \underbrace{E(u_{t})}_{0} = E(x_t)
+$$
+
+```{r}
+plot(x, y)
+mean(x)
+mean(y)
+abline(v = mean(x), col = 3, lwd = 2)
+abline(h = mean(y), col = 2, lwd = 2)
+```
+
+```{r}
+cov(x, y)
+```
+
+$$
+(x_t - \overline{x})(y_{t} - \overline{y}) > 0 \text{ for points in the top right part}\\
+(x_t - \overline{x})(y_{t} - \overline{y}) > 0 \text{ for points in the bottom left part}\\
+(x_t - \overline{x})(y_{t} - \overline{y}) < 0 \text{ for points in the bottom right and top left parts}
+$$
+The sample covariance is defined as:
+$$
+Cov(x, y) = \frac{1}{T - 1}\sum_{t = 1}^{T}(x_t - \overline{x})(y_{t} - \overline{y})
+$$
+
+$$
+\overline{y} = \frac{1}{T}\sum_{t = 1}^{T}y_{t} \\
+(y_t - \overline{y}) > 0 \text{ for points above the red line}\\
+(y_t - \overline{y}) < 0 \text{ for points below the red line}\\
+(x_t - \overline{x}) > 0 \text{ for points to the right of the green line}\\
+(x_t - \overline{x}) < 0 \text{ for points to the left of the green line}
+$$
+
+$$
+s^2(x) = \frac{1}{T - 1}\sum_{t = 1}^{T}(x_t - \overline{x})^2\\
+s^2(y) = \frac{1}{T - 1}\sum_{t = 1}^{T}(y_t - \overline{y})^2\\
+
+\rho(x, y) = \frac{Cov(x, y)}{\sqrt{s^2(x)s^2(y)}} \text{ correlation coefficient}\\
+-1 \leq \rho(x, y) \leq 1
+$$
+
+$$
+y_{t} =  - x_{t}
+$$
+
+$$
+\rho(x, y) = \rho(x, x) = \frac{Cov(x, x)}{\sqrt{s^2(x)s^2(x)}} = \frac{s^2(x)}{s^2(x)} = 1
+$$
+
+$$
+Cov(x, x) = \frac{1}{T - 1}\sum_{t = 1}^{T}(x_t - \overline{x})^2 = Var(x) = s^2(x)
+$$
+$$
+y_t = bx_{t} + a, \quad b,a \in R\\
+b > 0: \rho(x, y) = 1\\
+b < 0: \rho(x, y) = -1 \\
+$$
+
+$$
+y_t, y_{t - 1}, y_{t - 2},\ldots, y_{t - k}
+$$
+
+$$
+\gamma_0 = Cov(y_t, y_{t}) = Var(y_t) = s^2(x)\\
+\gamma_{1} = Cov(y_{t}, y_{t - 1}) \text{ first order autocovariance }\\
+\gamma_{2} = Cov(y_{t}, y_{t - 2}) \text{ second order autocovariance } \\
+\gamma_{3} =Cov(y_{t}, y_{t - 3}) \text{ third order autocovariance } \\
+\vdots \\
+\gamma_{k} =Cov(y_{t}, y_{t - k}) \text{ k-th order autocovariance } \\
+$$
+$$
+\rho_{0}= \rho(y_t, y_{t}) = 1 \\
+\rho_{1} = \rho(y_{t}, y_{t - 1}) \text{ first order autocorrelation }\\
+\rho_{2} = \rho(y_{t}, y_{t - 2}) \text{ second order autocorrelation } \\
+\rho_{3} =\rho(y_{t}, y_{t - 3}) \text{ third order autocorrelation } \\
+\vdots \\
+\rho_{k} =\rho(y_{t}, y_{t - k}) \text{ k-th order autocorrelation } \\
+$$
+
+$$
+\rho_1 = \frac{\gamma_1}{\gamma_0} \\
+\rho_2 = \frac{\gamma_2}{\gamma_0} \\
+\vdots\\
+\rho_k = \frac{\gamma_k}{\gamma_0}\\
+$$
+$$
+\text{Assume that } s^2(y_t) = s^2(y_{t - 1}) \\
+\rho_{1} = \rho(y_t, y_{t - 1}) = \frac{Cov(y_t, y_{t - 1})}{\sqrt{s^2(y_t)s^2(y_{t})}} = \frac{Cov(y_t, y_{t - 1})}{s^2(y_t)} = \frac{\gamma_1}{\gamma_0}
+$$
+
+$$
+u_t \sim N(0, 1) \\
+u_{t} \text{ and } u_{t - k} \text{ are not correlated for each } k \neq 0.
+$$
+
+```{r}
+library(xts)
+n <- 100
+uRaw <- rnorm(n) ## Generate 100 observations from a standard normal distribution
+u <-xts(uRaw, order.by = seq.Date(as.Date("2020-11-09"), by = "day", length.out = n)) 
+acf(u)
+## acf(u, plot = FALSE)
+```
+
+## Exercise
+
+Compute the sample first order autocovariance of the following time series.
+
+$$
+x: x_1, x_2, x_3\\
+x: (2, 3, 10)\\
+
+Cov(x_t, x_{t - 1}) = \frac{1}{T - 1}\sum_{t = 1}^{T}(x_t - \overline{x})(x_{t - 1} - \overline{x})\\
+\overline{x} = 5\\
+\gamma_1 = Cov(x_t, x_{t - 1}) = \frac{1}{3 - 1}[(2 - 5)(NA - 5) + (3 - 5)(2 - 5) + (10 - 5)(3 - 5)] =\\
+= \frac{1}{2}[NA + (-2)(-3) + (5)(-2)] = \frac{1}{2}(6 -10) = -2\\
+\gamma_1 = -2\\
+\rho_{1} = ? \\
+
+
+s^2(x) = Var(x_{t}) = \frac{1}{T - 1}\sum_{t = 1}^{T}\left[(x_t - \overline{x})^2\right] =\\
+\frac{1}{3 - 1}[(2 - 5)^2 + (3 - 5)^2 + (10 - 5)^2] = \frac{1}{2}[(-3)^2 + (-2)^2 + 5^2] = \\
+\frac{1}{2}[9 + 4 + 25] = \frac{38}{2} = 19\\
+\gamma_0 = 19\\
+\rho_{1} = \frac{\gamma_1}{\gamma_0} = \frac{-2}{19} = ...
+$$
+```{r}
+var(c(2, 3, 10))
+acf(c(2, 3, 10), plot = FALSE)
+```
+## ARIMA
+
+Notation:
+$$
+u_{t} \sim WN(\sigma^2) \implies\\
+E(u_t) = 0\\
+Var(u_{t}): = E(u_{t} - E(u_t))^2 = E(u_t^2) = \sigma^2\\
+Cov(u_{t}, u_{t - 1}) = E[(u_t - E(u_t))(u_{t-1}-E(u_{t-1})] = E(u_tu_{t-1})\\
+E(u_{t}u_{t - k}) = 0, \quad k\neq 0
+$$
+
+$$
+u_t \sim WN(\sigma^2)\\
+y_{t} = y_{t - 1} + u_{t} \quad \text{ random walk, ARIMA(1, 1, 0)}
+$$
+
+$$
+y_{t} = y_{t - 1} + u_{t}\\
+y_{t - 1} = y_{t - 2} + u_{t - 1}\\
+y_{t - 2} = y_{t - 3} + u_{t - 2}\\
+\vdots\\
+y_{1} = y_{0} + u_{1}
+$$
+$$
+y_{t} = y_{t - 2} + u_{t - 1} + u_{t} \\
+y_{t} = y_{t - 3} + u_{t - 2} + u_{t - 1} + u_{t} \\
+\vdots\\
+y_{t} = y_{0} + u_{1} + u_{2} + \ldots + u_{t}\\
+\text{Assume that } y_{0} = 0\\
+y_{t} = u_{1} + u_{2} + \ldots + u_{t} = \sum_{i = 1}^{t}u_{t}\\
+E(y_{t}) = E\left(\sum_{i = 1}^{t}u_{t}\right) = \sum_{i = 1}^{t}\underbrace{E(u_{i})}_{0} = 0
+$$
+## Mean stationarity
+If the expected value of a time series does not depend on the time index we say 
+that the series is mean (expected value) stationary.
+
+## Variance 
+
+$$
+y_{t} = u_{1} + u_{2} + \ldots + u_{t} = \sum_{i = 1}^{t}u_{t}\\
+Var(y_{t}) = Var\left(\sum_{i = 1}^{t}u_{t}\right) = \sum_{i=1}^{t}Var(u_t) \quad \text{ because u_t and u_{t-k} are uncorrelated by definition}\\
+Var(y_{t}) =\sum_{i=1}^{t}\underbrace{Var(u_t)}_{\sigma^2} = \sum_{i = 1}^{t}\sigma^2 =\\
+= (\sigma^2 + \sigma^2 + \ldots +\sigma^2) = t\sigma^2\\
+Var(y_{t}) = t\sigma^2
+$$
+## Variance stationarity
+
+We say that a process is variance stationary if the variance does not depend on the t-index.
+
+
+
+## Covariance
+
+$$
+Var(y_{t}):= E(y_t - E(y_t))(y_{t} - E(y_t)) = E(y_t - E(y_t))^2\\
+\text{if } E(y_t) = 0\\
+E(y_{t}^2) = E(y_{t}y_{t})\\
+Var(y_{t - 1}) = E(y_{t - 1}y_{t - 1})
+$$
+
+$$
+y_t = y_{t - 1} + u_{t}, \quad u_{t} \sim WN(\sigma^2)\\
+Cov(y_{t}, y_{t - 1}) : = E[(y_t - E(y_{t}))(y_{t - 1} - E(y_{t - 1}))]\\
+Cov(y_{t}, y_{t - 1}) = E(y_ty_{t - 1})\\
+Cov(y_{t}, y_{t - 1}) = E\left[(y_{t - 1} + u_t) y_{t - 1}\right]\\
+Cov(y_{t}, y_{t - 1}) = E\left[y_{t - 1}y_{t - 1} + u_t y_{t - 1}\right]\\
+Cov(y_{t}, y_{t - 1}) = \underbrace{E\left[y_{t - 1}y_{t - 1}\right]}_{Var(y_{t-1}) = (t - 1)\sigma^2} + E\left[u_t y_{t - 1}\right]\\
+Cov(y_{t}, y_{t - 1}) = (t - 1) \sigma^2 + E\left(u_{t}\sum_{i = 1}^{t - 1}u_{i}\right)\\
+Cov(y_{t}, y_{t - 1}) = (t - 1) \sigma^2 + E\left(u_t(u_1 + u_2 + \ldots,u_{t -2} + u_{t - 1})\right)\\
+Cov(y_{t}, y_{t - 1}) = (t - 1) \sigma^2 + E\left(u_{t}u_{1} + u_{t}u_{2}  + \ldots + u_{t}u_{t -2} + u_{t}u_{t - 1}\right)\\
+Cov(y_{t}, y_{t - 1}) = (t - 1) \sigma^2 + \underbrace{E(u_{t}u_{1})}_{=0} + \underbrace{E(u_{t}u_{2})}_{=0}  + \ldots + \underbrace{E(u_{t}u_{t -2})}_{=0} + \underbrace{E(u_{t}u_{t - 1})}_{=0}\\
+Cov(y_{t}, y_{t - 1}) = (t - 1)\sigma^2
+$$
+
+$$
+E(\delta) = \delta \\
+Var(\delta) = 0
+$$
+
+
+## Model structure:
+
+$$
+E(y_t) = ?\\
+Var(y_t) = ? \\
+Cov(y_{t}, y_{t - k}) = ?
+$$
+
+
+$$
+y_{t} = \delta + \alpha y_{t - 1} + u_{t}, \quad u_{t} \sim WN(\sigma^2); \delta, \alpha \in R
+$$
+$$
+y_{t} = \delta + \alpha y_{t - 1} + u_{t}\\
+y_{t - 1} = \delta + \alpha y_{t - 2} + u_{t - 1}\\
+y_{t - 2} = \delta + \alpha y_{t - 3} + u_{t - 3}\\
+\vdots\\
+y_{2} = \delta + \alpha y_{1} + u_{2}\\
+y_{1} = \delta + \alpha y_{0} + u_{1}\\
+$$
+$$
+y_{2} = \delta + \alpha (\delta + \alpha y_{0} + u_1) + u_{2}\\
+= \delta + \alpha\delta + \alpha^2y_{0} + \alpha u_{1} + u_{2}\\
+y_3 = \delta + \alpha y_{2} + u_{3}\\
+y_{3} = \delta + \alpha (\delta + \alpha\delta + \alpha^2y_{0} + \alpha u_{1} + u_{2}) + u_{3}\\
+y_{3}=\delta + \alpha\delta + \alpha^2\delta + \alpha^3y_{0}  + \alpha^2u_{1} + \alpha u_{2} + u_{3}\\
+\vdots\\
+y_{t} = \delta(1 + \alpha + \alpha^2 +\ldots +\alpha^{t-1}) + \alpha^t y_{0} + u_{t} + \alpha u_{t - 1} + \alpha^2 u_{t - 2} + \ldots + \alpha^{t - 1}u_{1}
+$$
+$$
+\alpha = 1, \delta = 0, y_{0} = 0\\
+y_{t} = u_{t} + u_{t - 1} + u_{t - 2} + \ldots + u_{1}\\
+--\\
+\alpha = 0.8, \delta = 0, y_{0} = 0\\
+y_{t} = u_{t} + 0.8 u_{t - 1} + (0.8)^2 u_{t - 2} + \ldots + (0.8)^{t - 1}u_{1}\\
+--\\
+\alpha = 1.1, \delta = 0, y_{0} = 0\\
+y_{t} =u_{t} + 1.1 u_{t - 1} + (1.1)^2 u_{t - 2} + \ldots + (1.1)^{t - 1}u_{1}
+$$
+$$
+1 + r + r^2 + r^3 + \ldots + r^n = \frac{1}{1 - r}\\
+|r| < 1
+$$
+
+$$
+S_{n} = 1 + r + r^2 + r^3 + \ldots + r^{n - 1} + r^n\\
+rS_{n} = r (1 + r + r^2 + r^3 + \ldots + r^{n - 1} + r^n) = r + r^2 + r^3 + \ldots + r^{n + 1}\\
+S_{n} - rS_{n} = S_{n}(1 - r) = 1 - r^{n + 1}\\
+S_{n} = \frac{1 - r^{n + 1}}{1 - r}\\
+\lim_{n \to \infty} S_{n} = \frac{1 - \lim_{n \to \infty} r^{n + 1}}{1 - r} = \frac{1}{1 - r}\\
+\text{if } |r| < 1
+$$
+
+
+## Homework
+$$
+y_{t} = \delta + y_{t - 1} + u_{t}, \quad u_{t} \sim WN(\sigma^2) \text{ random walk with drift}\\
+\delta > 0 \text{ :constant, i.e non-random}\\
+E(y_{t}) = ?
+$$
+
+
+
+
+$$
+\gamma_1 = Cov(x_t, x_{t - 1}) = \frac{1}{T - 1}\sum_{t = 1}^{T}(x_{t} - \overline{x})(x_{t - 1} - \overline{x})
+$$
+$$
+\gamma_1 = \frac{1}{3 - 1}[(3 - 3)(1 - 3) + (5 - 3)(3 - 3)] = 0\\
+\rho_1 = \frac{\gamma_1}{\gamma_0} = \frac{0}{4} = 0
+$$
+
+$$
+s^2(x) = \frac{1}{T - 1}\sum_{t = 1}^{T}(x_t - \overline{x})^2\\
+\rho(x, y) = \frac{Cov(x, y)}{\sqrt{s^2(x)s^2(y)}} \text{ correlation coefficient}\\
+-1 \leq \rho(x, y) \leq 1
+$$
+
+$$
+\rho(x, y) = \rho(x, x) = \frac{Cov(x, x)}{\sqrt{s^2(x)s^2(x)}} = \frac{s^2(x)}{s^2(x)} = 1
+$$
+
+```{r}
+x <- c(1, 3, 5)
+var(x)
+```
+
+```{r}
+n <- 100
+uRaw <- 100 * runif(n) ## Generate 100 observations from a standard normal distribution
+u <-xts(uRaw, order.by = seq.Date(as.Date("2020-11-09"), by = "day", length.out = n)) 
+uL1 <- lag(u)
+plot(as.data.frame(uL1)[, 1], as.data.frame(u)[, 1])
+abline(h = 0)
+abline(v = 0)
+```
+
+```{r}
+plot(u)
+```
+
+## Structure of the data (realm of the data)
+- (sample) Mean value of the series (calculated from actual data)
+- (sample) Variance of the series (calculated from actual data)
+- (sample) Autocorrelation structure (calculated from actual data)
+$$
+\rho_{1}, \rho_{2}, \ldots, \rho_{k}
+$$
+
+## Structure of the model (realm of mathematical models)
+
+- Expected value of the series (model)
+- Variance of the series (model)
+- Autocorrelation structure (model)
+
+
+
+```{r}
+plot(u)
+```
+```{r}
+uL1 <- lag(u)
+plot(as.data.frame(uL1)[, 1], as.data.frame(u)[, 1])
+```
+
+
+
+$$
+y_{1}, y_{2}\ldots,y_{T}\\
+y_{0}, y_{1}\ldots,y_{T - 1} : \text{first lag of } y_{t}: y_{t - 1}
+$$
+
+## Time series structure
+
+- level / trend of the time series
+- fluctuations (variance)
+- auto-covariance / auto-correlation structure
+
+$$
+y_{t}\\
+\rho_{1} = Corr(y_{t}, y_{t - 1}) \text{ first order autocorrelation coefficient}\\
+\rho_{2} = Corr(y_{t}, y_{t - 2}) \text{ second order autocorrelation coefficient}\\
+\rho_{\tau} = Corr(y_{t}, y_{t - \tau})
+$$
+
+$$
+\rho_{0} = Corr(y_{t}, y_{t})
+$$
+
+
+```{r}
+randomValues <- rnorm(100)
+timeIndex <- seq.Date(as.Date("2018-10-10"), by = "day", length.out = 100)
+u <- xts(randomValues, timeIndex)
+## plot(u)
+## mean(u)
+acf(u)
+```
+
+```{r}
+## Auto-correlation function
+
+```
+$$
+y_{t} = y_{t} \\
+Corr(y_{t}, y_{t}) = 1
+$$
+## Blue dotted lines in the autocorrelation plot
+- 95% confidence interval for the autocorrelations
+
+$$
+
+$$
+
+$$
+a,b \in R\\
+b > 0\\
+y_{t} = a + b x_{t}, \quad \rho_{x, y} = 1\\
+y_{t} = a - b x_{t}, \quad \rho_{x, y} = -1
+$$
+
+## ARIMA
+
+$$
+u_{t} \sim WN(\sigma^2) \implies \\
+u_{t} \sim N(0, \sigma^2) \\
+E(u_t) = 0\\
+Var(u_t) = \sigma^2\\
+E(u_tu_{t - k}) = 0, k \neq t \text{ uncorrelated } \\
+$$
+
+
+$$
+u_{t} \sim WN(\sigma^2)\\
+y_{t} = y_{t - 1} + u_{t}\\
+y_{t - 1} = y_{t - 2} + u_{t - 1}\\
+y_{t - 2} = y_{t - 3} + u_{t - 2}\\
+\vdots\\
+y_{2} = y_{1} + u_{2}\\
+y_{1} = y_0 + u_{1}
+$$
+
+$$
+y_2 = y_0 + u_1 + u_2\\
+y_3 = y_0 + u_1 + u_2 + u_{3}\\
+y_4 = y_0 + u_1 + u_2 + u_{3} + u_4 \\
+\vdots\\
+y_t = y_0 + u_1 + u_2 + u_3 + u_4 + \ldots + u_{t - 1} + u_t\\
+y_t = y_0 + \sum_{i = 1}^{t}u_{i}\\
+\text{assume that } y_0 = 0 \\
+y_t = \sum_{i = 1}^{t}u_{i}\\
+
+E(y_t) = E(\sum_{i = 1}^{t}u_{i}) = \sum_{i = 1}^{t}E(u_i) = \sum_{i = 1}^{t}0 = 0 \\
+$$
+
+
+
+
+
+## Class Tue 18:30
+
+$$
+u_{t} \sim WN(\sigma^2) \implies\\
+E(u_t) = 0\\
+Var(u_{t}): = E(u_{t} - E(u_t))^2 = E(u_t^2) = \sigma^2 > 0\\
+Cov(u_{t}, u_{t - 1}): = E[(u_t - E(u_t))(u_{t-1}-E(u_{t-1})] = E(u_tu_{t-1})\\
+E(u_{t}u_{t - k}) = 0, \quad k\neq 0
+$$
+
+$$
+y_{t} = y_{t - 1} + u_{t}\\
+u_{t} \sim WN(\sigma^2)
+$$
+## Model structure
+
+- Expected value (mean) $E(y_t)$
+- Variance: $Var(y_t)$
+- Covariance structure: $Cov(y_t, y_{t - k})$ / Correlation structure: $\rho(y_t, y_{t - k})$
+
+$$
+y_{t} = \sum_{i = 1}^{t} u_{t}\\
+E(y_{t}) = 0\\
+Var(y_t) = ?
+$$
+If $u_t$ and $u_{t - k}$ are _uncorrelated_ then we can write the variance of their sum as the sum of their variances.
+$$
+Var(y_t) = Var\left(\sum_{i = 1}^t u_i\right) = \sum_{i=1}^{t}\underbrace{Var(u_i)}_{\sigma^2} = (\underbrace{\sigma^2 + \sigma^2 + \ldots + \sigma^2 }_{t \text{ times}}) = t\sigma^2\\
+Var(y_t) = t\sigma^2\\
+$$
+
+$$ 
+Cov(y_t, y_{t - 1}) = ?\\
+Cov(y_{t}, y_{t - 1}): = E[(y_t - E(y_t))(y_{t-1}-E(y_{t-1})] = E(y_t y_{t-1})\\
+E(y_t y_{t-1}) = E\left((y_{t - 1} + u_t)y_{t - 1}\right) = E\left(y_{t-1}^2 + u_{t}y_{t - 1}\right) =\\
+= E(y_{t - 1}^2) + E(u_{t}y_{t - 1}) = \\
+= Var(y_{t - 1}) + E(u_{t}y_{t - 1}) = \\
+= (t - 1)\sigma^2 + E(u_{t}y_{t - 1}) = \\
+= (t - 1)\sigma^2 + E\left(u_{t}\sum_{i=1}^{t - 1}u_i\right) = \\
+= (t - 1)\sigma^2 + E\left(u_{t}(u_1 + u_2 + u_3 +\ldots +u_{t-2} + u_{t - 1})\right) = \\
+= (t - 1)\sigma^2 + E\left(u_{t}u_1 + u_{t}u_2 + u_{t}u_3 +\ldots +u_{t}u_{t-2} + u_{t}u_{t - 1}\right) = \\
+= (t - 1)\sigma^2 + \underbrace{E(u_{t}u_1)}_{0} + E(u_{t}u_2) + E(u_{t}u_3) +\ldots +E(u_{t}u_{t-2}) + E(u_{t}u_{t - 1}) = \\
+Cov(y_t, y_{t - 1}) = (t - 1)\sigma^2
+$$
+we know (from the definition of $u_t$)
+$$
+E(u_{t}u_{t - k}) = 0, \quad k\neq 0
+$$
+$$
+\rho_1 = \rho(y_t, y_{t - 1}) = \frac{Cov(y_{t}, y_{t - 1})}{Var(y_{t})} = \frac{(t - 1)\sigma^2}{t\sigma^2} = \frac{t - 1}{t} = (1 - \frac{1}{t})
+$$
+
+## Mean stationarity
+
+A process is called mean stationary if its expected value does not depend on the time index.
+
+## Variance stationarity
+
+A process is called variance stationary if its variance does not depend on the time index.
+
+## Covariance stationarity
+A process is called covariance stationary if its covariance does not depend on the time index.
+
+## Homework:
+
+$$
+y_{t} = \delta + y_{t - 1} + u_{t}\\
+\delta \in R\\
+u_{t} \sim WN(\sigma^2)\\
+E(y_{t}) = ? 
+$$
+
+## First order autoregressive models (AR(1)): ARIMA(1, 0, 0)
+
+$$
+y_{t} = \delta + \alpha y_{t - 1} + u_{t}\\
+\delta \in R \text{ non-random} \\
+u_{t} \sim WN(\sigma^2)
+$$
+
+$$
+E(y_t) = ?\\
+Var(y_{t}) = ?\\
+Cov(y_{t}, y_{t - k}) = ?
+$$
+$$
+E(y_t) = ?
+$$
+$$
+y_{t} = \delta + \alpha y_{t - 1} + u_{t}\\
+y_{t - 1} = \delta + \alpha y_{t - 2} + u_{t - 1}\\
+y_{t - 2} = \delta + \alpha y_{t - 3} + u_{t - 2}\\
+\vdots\\
+y_{3} = \delta + \alpha y_{2} + u_{3}\\
+y_{2} = \delta + \alpha y_{1} + u_{2}\\
+y_{1} = \delta + \alpha y_{0} + u_{1}
+$$
+$$
+y_2 = \delta + \alpha(\delta + \alpha y_{0} + u_{1}) + u_{2} \\
+y_2 = (1 + \alpha)\delta + \alpha^2y_{0} + \alpha u_1 + u_2\\
+y_{3} = ? 
+$$
+
+
+## ARIMA(1, 0, 0)
+
+Autoregressive processes of first order.
+
+$$
+y_{t} = \delta + \alpha y_{t - 1} + u_t, \quad u_{t} \sim WN(\sigma^2)\\
+\implies E(u_t) = 0, Var(u_t) = \sigma^2, Cov(u_t, u_{t - k}) = 0, k \neq 0
+$$
+$$
+E(y_t) = \alpha E(y_{t - 1}) + E(u_t)\\
+E(y_t) \neq \alpha y_{t}\\
+$$
+$$
+E(y_{t}) = ?\\
+Var(y_{t}) = ?\\
+Cov(y_{t}, y_{t - k}) = ?; \rho(y_{t}, y_{t - k}) = ?\\
+$$
+$$
+\delta = 0, \alpha = 0.5
+$$
+
+$$
+y_{t} = \delta + \alpha y_{t - 1} + u_{t}
+$$
+
+$$
+L: \text{Lag operator}\\
+Ly_{t} = y_{t - 1}\\
+L^2y_{t} = L(Ly_t) = L(y_{t - 1}) = y_{t - 2}\\
+L\delta = \delta
+$$
+
+$$
+y_t = \delta  + \alpha Ly_{t} + u_{t}\\
+y_{t} - \alpha Ly_{t} = \delta +  u_{t}\\
+(1 - \alpha L)y_{t} = \delta + u_{t} \\
+y_{t} = \frac{\delta}{1 - \alpha L} + \frac{u_t}{1 - \alpha L}
+$$
+
+$$
+\frac{\delta}{1 - \alpha} + \frac{u_{t}}{1 - \alpha L}
+$$
+$$
+\frac{1}{1 - \alpha}
+$$
+$$
+S_{n} = 1 + \alpha + \alpha^2 + \alpha^3 + \alpha^4 + \ldots + \alpha^n\\
+\alpha S_{n} = \alpha + \alpha^2 + \alpha^3 + \alpha^4 + \alpha^5 + \ldots + \alpha^n + \alpha^{n + 1}\\
+S_{n} - \alpha S_{n} = 1 - \alpha^{n + 1}\\
+S_{n} = \frac{1 -\alpha^{n + 1}}{1 - \alpha}\\
+\lim_{n \to \infty} = \alpha^{n + 1} = 0 \text{ for } -1 < \alpha < 1 \\
+\implies \lim_{n \to \infty} S_{n} = \frac{1}{1 - \alpha}
+$$
+$$
+\frac{1}{1 - \alpha L} = 1 + \alpha L + \alpha^2 L^2 + \alpha^3 L^3 \ldots\\
+\text{ for } -1 < \alpha < 1
+$$
+
+$$
+y_{t} = \frac{\delta}{1 - \alpha} + \frac{u_{t}}{1 - \alpha L}\\
+y_{t} = \frac{\delta}{1 - \alpha} + (1  + \alpha L + \alpha^2L^2 + \ldots)u_{t}\\
+y_{t} = \frac{\delta}{1 - \alpha} + u_{t}  + \alpha Lu_{t} + \alpha^2L^2u_{t} + \ldots\\
+y_{t} = \frac{\delta}{1 - \alpha} + u_{t}  + \alpha u_{t - 1} + \alpha^2u_{t - 2} + \ldots\\
+y_{t} = \frac{\delta}{1 - \alpha} + \sum_{i = 0}^{\infty}\alpha^{i}u_{t - i} \\
+$$
+$$
+E(y_{t}) = E\left(\frac{\delta}{1 - \alpha} + \sum_{i = 0}^{\infty}\alpha^{i}u_{t - i} \right)\\
+E(y_{t}) = E\left(\frac{\delta}{1 - \alpha}\right) + \sum_{i = 0}^{\infty}\alpha^{i}\underbrace{E(u_{t - i})}_{=0} \\
+E(y_{t}) = \frac{\delta}{1 - \alpha}\\
+$$
+
+$$
+Var(y_{t}) = E(y_{t} - E(y_{t}))^2 = E\left(y_t - \frac{\delta}{1 - \alpha}\right)^2 \\
+= E\left(\frac{\delta}{1 - \alpha} + \sum_{i = 0}^{\infty}\alpha^{i}u_{t - i} - \frac{\delta}{1 - \alpha}\right)^2\\
+= E\left(\sum_{i  = 0}^{\infty}\alpha^iu_{t - i}\right)^2 = E\left((u_{t}  + \alpha u_{t - 1} + \alpha^2u_{t - 2} + \ldots)(u_{t}  + \alpha u_{t - 1} + \alpha^2u_{t - 2} + \ldots)\right) = \\
+E\left(u_tu_t + \alpha u_{t}u_{t-1} + \alpha^2 u_{t}u_{t-2} + \ldots + \alpha u_{t}u_{t - 1} + \alpha^2u_{t-1}{u_{t-1}} + \ldots \right) =\\
+\underbrace{E(u_{t}u_{t})}_{=\sigma^2} + \alpha \underbrace{E(u_{t}u_{t - 1})}_{=0} + \alpha^2E(u_tu_{t - 2}) + \ldots +\alpha E(u_{t}u_{t - 1}) + \alpha^2 \underbrace{E(u_{t-1}{u_{t-1}}}_{=\sigma^2}) + \ldots + \alpha^4\underbrace{E(u_{t - 2}u_{t - 2})}_{=\sigma^2} + \ldots =\\
+\sigma^2 + \alpha^2\sigma^2 + \alpha^4\sigma^2 + \alpha^6 \sigma^2 + \ldots\\
+\sigma^2(1 + \alpha^2 + \alpha^4 + \alpha^6 + \ldots)\\
+\text{Let } a = \alpha^2\\
+\sigma^2(1 + a + a^2 + a^3 + \ldots) = \sigma^2\frac{1}{1 - a} = \frac{1}{1 - \alpha^2}\\
+\implies \\
+Var(y_t) = \frac{\sigma^2}{1 - \alpha^2}
+$$
+
+$$
+E(u_t) = 0\\
+Var(u_{t}) = \sigma^2\\
+Var(u_{t}) = E(u_{t} - E(u_t))^2 = E(u_t^2) = E(u_tu_t)\\
+Cov(u_{t}, u_{t - k}) = E(u_{t} - E(u_t))(u_{t - k} - E(u_{t - k})) = E(u_tu_{t - k}) = 0
+$$
+
+$$
+Cov(y_{t}, y_{t - 1}) = E(y_{t} - E(y_t)(y_{t-1} - E(y_{t - 1})) = \\
+E( \sum_{i = 0}^{\infty}\alpha^{i}u_{t - i})(\sum_{i = 0}^{\infty}\alpha^{i}u_{t -1 - i})= \\
+E(y_{t}) = E\left((u_t + \alpha^1u_{t - 1} + \alpha^2 u_{t - 2} +\ldots)(u_{t - 1} + \alpha u_{t - 2} + \ldots)\right) = \\
+E(\alpha u_{t - 1}^2 + \alpha^3u_{t-2}^2 + \ldots) = \\
+\alpha E(u_{t- 1}^2) + \alpha^3 E(u_{t-2}^2) + \ldots = \\
+\alpha\sigma^2 + \alpha^3\sigma^2 + \ldots = \\
+\sigma^2(\alpha + \alpha^3 + \alpha^5 + \alpha^7 +  \ldots) = \\
+\sigma^2\alpha(1 + \alpha^2 + \alpha^4 + \alpha^6 + \ldots) = \\
+\sigma^2\alpha\frac{1}{1 - \alpha^2} = \\
+Cov(y_{t}, y_{t - 1}) = \alpha\frac{\sigma^2}{1 - \alpha^2}\\
+\rho_{1} = \rho(y_{t}, y_{t - 1}) := \frac{Cov(y_{t}, y_{t - 1})}{Var(y_{t})} = \frac{\alpha\frac{\sigma^2}{1 - \alpha^2}}{\frac{\sigma^2}{1 - \alpha^2}} \implies \\
+\rho_{1} = \alpha
+$$ 
+
+$$
+y_t(1 - \alpha L) = u_{t}
+1 - \alpha L :\\ lag-polynomial\\
+1 - \alpha L = 0
+$$
+root of the lag-polynomial
+
+## Homework:
+
+$$
+Cov(y_{t}, y_{t - 2}) = \alpha^2\frac{\sigma^2}{1 - \alpha^2}
+$$
+
+$$
+y_{t} = \delta + \alpha_1y_{t - 1} + \alpha_{2}y_{t - 2} + u_{t}\\
+(1 - \alpha_1 L - \alpha_2 L^2)y_{t} = u_{t}
+$$
+
+
+
+## Time series plots
+
+$$
+y_{t} = \alpha y_{t - 1} + u_{t}, \quad u_t \sim WN(\sigma^2)
+$$
+
+```{r}
+n <- 100
+```
+
+## AR(1)
+
+$$
+y_{t} = 0.8 y_{t - 1} + u_{t}, \quad u_t \sim WN(1) : \quad AR(1)\\
+$$
+We rewrite the process using the lag-operator (B).
+$$
+By_{t} := y_{t - 1} \quad \text{Definition}\\
+y_{t} = 0.8By_{t} + u_{t}\\
+(1 - 0.8B)y_{t} = u_{t}\\
+y_{t} = \frac{u_{t}}{1 - 0.8B}\\
+y_{t} = \underbrace{\sum_{i = 0}^{\infty}\phi_{i}u_{t - i}}_{MA(\infty)} \quad \text{stationary?}
+$$
+Moving average models are always stationary as linear combinations of white noise.
+
+
+## Roots of the lag polynomial
+
+-> Characteristic equation
+
+$$
+1B^{0} - \alpha B^{1} = 0\\
+\lambda = 1/B \implies \lambda = B^{-1}\\
+\lambda  - \alpha = 0\\
+\lambda_{1} = \alpha\\
+\text{if the roots of the characteristic equation are less than 1 in absolute value}\\
+\text{then the process is stationary}
+$$
+
+
+```{r}
+xAr1.1 <- arima.sim(model = list(ar = c(0.8, -0.2, 0.1)), n = n)
+```
+
+```{r}
+plot(xAr1.1, ylab="Value", main="Simulation from an AR(1) process with alpha = 0.8")
+abline(h = mean(xAr1.1))
+acf(xAr1.1)
+pacf(xAr1.1)
+```
+$$
+y_{t} = -0.8 y_{t - 1} + u_{t}, \quad u_t \sim WN(1) : \quad AR(1)\\
+$$
+
+
+```{r}
+xAr1.2 <- arima.sim(model = list(ar = c(-0.8)), n = n)
+```
+
+```{r}
+?arima.sim
+plot(xAr1.2)
+abline(h = mean(xAr1.2))
+acf(xAr1.2)
+pacf(xAr1.2)
+```
+
+## Random walk
+
+$$
+y_{t} = y_{t - 1} + u_{t}, u_{t} \sim WN(1)\\
+y_{t} = \sum_{i = 1}^{t}u_{i}\\
+y_1 = u_1\\
+y_2 = u_1 + u_2\\
+y_3 = u_1 + u_2 + u_3\\
+\vdots\\
+$$
+```{r}
+library(xts)
+xNorm <- rnorm(n)
+xRw <- cumsum(xNorm)
+timeIndex <- seq(as.Date("2020-10-10"), by ="day", length.out = n)
+rwSeries <- xts(xRw, order.by = timeIndex)
+```
+
+
+```{r}
+plot(rwSeries)
+acf(rwSeries)
+pacf(rwSeries)
+```
+
+$$
+L = B\\
+By_{t} = y_{t - 1}\\
+B^2y_{t} = B(By_{t}) = By_{t - 1} = y_{t - 2}\\
+B\delta = \delta\\
+y_{t} = \alpha y_{t - 1} + u_{t}, \quad u_t \sim WN(1) : \quad AR(1)\\
+y_{t} = \alpha By_{t} + u_{t}\\
+y_{t} - \alpha By_{t} = u_{t}\\
+(1 - \alpha B)y_{t} = u_{t}\\
+y_{t} = \frac{u_{t}}{(1 - \alpha B)}\\
+y_{t} = \underbrace{\sum_{i = 0}^{\infty}\phi_{i}u_{t - i}}_{MA(\infty)}
+$$
+
+
+
+## AR(2)
+
+$$
+B^2y_{t} = B(By_t) = By_{t - 1} = y_{t - 2}\\
+y_{t} = \alpha_1y_{t - 1} + \alpha_2y_{t - 2} + u_{t}\\
+y_{t} = \alpha_1By_{t} + \alpha_2B^{2}y_{t} + u_{t}\\
+y_{t} - \alpha_1By_{t} - \alpha_2B^{2}y_{t} = u_{t}\\
+(1 - \alpha_1B - \alpha_2B^{2})y_{t} = u_{t}
+$$
+
+$$
+1 - \alpha_1B - \alpha_2B^{2}\\
+\lambda^2 - \alpha_1\lambda - \alpha_2 = 0 \quad \text{Characteristic equation}\\
+\lambda_{1, 2} = ?
+$$
+
+## Example AR(2)
+$$
+y_{t} = 0.7y_{t - 1} + 0.2y_{t - 2} + u_{t}
+$$
+has a characteristic equation
+$$
+\lambda^2 - 0.7\lambda - 0.2 = 0
+$$
+```{r}
+?polyroot
+lambda12 <- polyroot(c(-0.2, -0.7, 1))
+(-0.2178908)^2 -(0.7*-0.2178908) -0.2
+abs(lambda12) < 1
+```
+
+$$
+\lambda^2 - 0.7\lambda - 0.2 = 0\\
+\lambda_{1} = 0.2178, \lambda_{2} = 0.9178\\
+-1< \lambda_1 < 1\\
+-1< \lambda_2 < 1\\
+\implies \text{stationary process}
+$$
+
+
+$$
+y_{t} = 0.7y_{t - 1} - 0.2y_{t - 2} + u_{t}
+$$
+
+$$
+1 - \alpha_1B - \alpha_2B^{2}\\
+\lambda^2 - 0.7\lambda + 0.2 = 0 \quad \text{Characteristic equation}\\
+\lambda_{1, 2} = ?
+$$
+
+```{r}
+lambda12 <- polyroot(c(0.2, -0.7, 1))
+lambda12
+abs(lambda12)
+```
+$$
+|\lambda_{1,2}| < 1 \implies \text{ Stationary process}
+$$
+
+```{r}
+?arima.sim
+xAr2.1 <- arima.sim(model = list(ar = c(0.7, -0.2)), n = n)
+```
+
+```{r}
+plot(xAr2.1)
+acf(xAr2.1)
+pacf(xAr2.1)
+
+```
+
+
+
+$$
+\rho_1 = \alpha_1 + \alpha_2\rho_{1}\\
+\implies (1 - \alpha_2)\rho_1 = \alpha_1 \implies \rho_1 = \frac{\alpha_1}{1 - \alpha_2}\\
+\rho_2 = \alpha_1\rho_1 + \alpha_2\rho_{0}
+$$
+
+## Moving average 
+
+## Example MA(1)
+
+$$
+y_{t} = u_{t} - \beta_{1}u_{t - 1}, \quad u_{t} \sim WN(\sigma^2)
+$$
+
+$$
+Ey_{t} = E(u_t) - \beta_1E(u_{t - 1}) = 0.
+$$
+
+$$
+Var(y_{t}) = Var(u_{t} - \beta u_{t - 1}) = Var(u_{t}) + Var(\beta_1 u_{t - 1}) \quad \text{ becase } u_{t} \text{ and } u_{t -1} \text{ are not correlated}
+$$
+
+$$
+Var(u_{t}) + Var(\beta_1 u_{t - 1}) = \sigma^2 + \beta_1^2\sigma^2 = (1 + \beta_1^2)\sigma^2\\
+Var(y_{t}) = (1 + \beta_1^2)\sigma^2
+$$
+
+
+Question
+$$
+Var(y_t) = 2\\
+\sigma^2 = 1\\
+
+\beta_1 = 1\\
+\beta_1 = -1
+$$
+Invertibility condition?
+
+$$
+y_{t} = u_{t} -\beta_1Bu_{t}\\
+y_{t} = (1 - \beta_1B)u_{t}\\
+\underbrace{\sum_{i=0}^{\infty}\phi_{i}y_{t - i}}_{AR(\infty)} = \frac{y_{t}}{(1 - \beta_1B)} = u_{t}\\
+\text{if } |\beta_1| < 1
+$$
+## Example MA(2)
+
+$$
+y_{t} = u_{t} - \beta_1u_{t - 1} - \beta_2u_{t - 2}\\
+y_{t} = (1 - \beta_1B - \beta_2B^2)u_{t}
+$$
+Characteristic equation of the lag polynomial?
+
+$$
+(1 - \beta_1B - \beta_2B^2)\\
+\lambda^2 - \beta_1\lambda -\beta_2 = 0\\
+|\lambda_{1,2}| < 1
+$$
+## Example MA(2)
+
+$$
+y_{t} = u_{t} - 0.7u_{t - 1} - 0.2u_{t - 2}\\
+$$
+
+```{r}
+masim <- arima.sim(model = list(ma = c(0.7)), n = 1000)
+```
+
+```{r}
+plot(masim)
+acf(masim)
+pacf(masim)
+```
+
+## AR(p) models
+
+
+### Bulgaria GDP series (level)
+
+```{r}
+library(xts)
+# a) Read data
+gdp <- read.csv('https://raw.githubusercontent.com/feb-uni-sofia/timeseries-20202021/main/data/gdp_bg_qrt_2000-2017.csv')
+
+# b) Create time series object
+timeIndex <- as.yearqtr(gdp$Index, format = '%YQ%q')
+gdpSeries <- xts(gdp$GDP, order.by = timeIndex)
+```
+
+
+```{r}
+plot(gdpSeries)
+acf(gdpSeries)
+```
+```{r}
+ar1x <- arima.sim(71, model = list(ar = c(0.7, 0.2)))
+plot(ar1x)
+```
+
+
+### Bulgaria GDP series (growth rates)
+
+Let the values of the GDP series be:
+2000Q1: 10306
+2000Q2: 10961
+2000Q3: 13210
+2000Q4: 13265
+
+2001Q1: 10654
+2001Q2: 11331
+2001Q3: 13742
+2001Q4: 13815
+
+$$
+y_{1}, y_{2}, y_{3},\ldots,y_{T}\\
+$$
+
+$$
+growthRate_{t} = \frac{y_t - y_{t - 4}}{y_{t - 4}}
+$$
+$$
+\text{Continuous growth rate}_{t} = \log(y_{t}) - \log(y_{t - 4})
+$$
+```{r}
+growthSeries <- log(gdpSeries) - log(lag(gdpSeries, k = 4))
+```
+
+
+<!-- $$ -->
+<!-- g_{1}, g_{2}, g_{3},\ldots,g_{T}\\ -->
+<!-- g_{t} = \frac{y_{t} - y_{t - 1}}{y_{t - 1}} \text{ growth date} \\  -->
+<!-- g_{t} = \log(y_{t}) - \log(y_{t - 1}) \text{ continuous growth date: quarter to quarter growth rate} \\ -->
+<!-- g_{t} = \log(y_{t}) - \log(y_{t - 4}) \text{ continuous growth: quarter to same quarter (previous year)} -->
+<!-- $$ -->
+
+## Data exploration
+
+```{r}
+## mean(growthSeries, na.rm = TRUE)
+plot(growthSeries)
+acf(growthSeries, na.action = na.omit)
+pacf(growthSeries, na.action = na.omit)
+```
+
+
+## Fit an AR(p) process
+
+$$
+y_{t} = \delta + \alpha y_{t - 1} + u_{t}, u_{t} \sim WN(\sigma^2): \text{AR(1)}
+$$
+
+$$
+\text{Prediction for } y_{t + 1}: \hat{y}_{t + 1|t} \text{ from the stand point of } t
+$$
+$$
+\hat{y}_{t + 1|t} = \delta + \alpha y_{t} + 0
+$$
+
+<!-- $$ -->
+<!-- E(y_t) = E(\delta) + \alpha E(y_{t - 1}) + E(u_t)\\ -->
+<!-- \mu = \delta + \alpha \mu \quad \text{ for } |\alpha| < 1\\ -->
+<!-- \mu = \frac{\delta}{1 - \alpha} -->
+<!-- $$ -->
+
+<!-- $$ -->
+<!-- \hat{y}_{t} = \hat{\delta} + \hat{\alpha}\hat{y}_{t - 1}, \hat{\sigma}^2 = ... -->
+<!-- $$ -->
+
+$$
+\frac{1}{T}\sum_{t = 1}^{T}(y_{t} - \hat{y}_{t})^2
+$$
+
+```{r}
+## Similar to lm()
+## ARIMA(p, d, q)
+fitAR1 <- arima(growthSeries, order = c(1, 0, 0)) ## AR(1)
+fitAR1 ## ar1: alpha
+```
+Estimates for $\alpha$ and $\delta$.
+
+$$
+\hat{\alpha} = 0.8152\\
+\hat{\delta} = 0.0353
+$$
+
+Prediction equation:
+$$
+\hat{y_{t}} = \hat{\delta}  + \hat{\alpha}\hat{y}_{t - 1}\\
+\hat{y_{t}} = 0.0353  + 0.8152\hat{y}_{t - 1}\\
+$$
+
+```{r}
+predict(fitAR1, n.ahead = 1)
+```
+
+We predict a 3.7% percent for the last quarter of 2017. A (95%) prediction interval for the growth rate in 2017Q4 
+[0.03716986 - 2*0.01751059, 0.03716986 + 2*0.01751059] = [0.00214868, 0.07219104].
+
+```{r}
+predict(fitAR1, n.ahead = 100)
+```
+$$
+\hat{\alpha} = 0.6993\\
+se(\hat{\alpha}) = 0.0904\\
+P(\alpha \in [\hat{\alpha} - 2se(\hat{\alpha}), \hat{\alpha} + 2se(\hat{\alpha})]) \approx 95\%
+$$
+$$
+\text{Approx. conf. interval (95%) for } \alpha: [0.81 - 2*0.0665, 0.81 + 2*0.0665] = [0.677, 0.943]
+$$
+
+
+```{r}
+xAr1 <- arima.sim(n = 71, model = list(ar = c(0.7)))
+arima(xAr1, order = c(1, 0, 0))
+```
+
+## Goodness of fit
+
+$$
+r_{t} = y_{t} - \hat{y}_{t} \quad \text{ residuals}\\
+r_{t} \neq u_{t}
+$$
+
+```{r}
+tsdiag(fitAR1)
+```
+
+
+## Ljung-Box autocorrelation test
+
+$$
+H_{0}: \rho_{1} = 0\\
+H_{1}: \rho_{1} \ne 0
+$$
+
+
+### Test statistic
+
+
+empirical (sample) autocorrelation of first order $\hat{\rho}_1$
+$$
+t_{BJ} = \hat{\rho}_{1}^2 \underbrace{\sim}_{H_0} \chi^2(1)
+$$
+
+$$
+\text{p-value} < 0.05 \implies \text{reject the null hypothesis}
+$$
+The p-value for the Box-Ljung test for autocorrelation (1st order): first point in the last plot in _tsdiag_ is around 0.3. Therefore
+we cannot reject the null hypothesis that the first order autocorrelation is zero.
+
+
+Box-Ljung test of autocorrelation of 2nd order.
+$$
+H_0: \rho_1 = \rho_2 = 0\\
+H_1: \text{ at least one } \rho_1 \text{ or } \rho_2 \ne 0
+$$
+
+Box-Ljung test of autocorrelation of k-th order.
+$$
+H_0: \rho_1 = \rho_2 =\ldots = \rho_{k} = 0, \quad k > 0 \\
+H_1: \text{ at least one } \rho_i \ne 0, 0 < i \leq k
+$$
+
+## AR(0) fit
+
+$$
+y_{t} = \delta + u_{t}, u_{t} \sim WN(\sigma^2)
+$$
+```{r}
+## ARIMA(2, 0, 0)
+fitAR0 <- arima(growthSeries, order = c(0, 0, 0)) ## AR(2)
+tsdiag(fitAR0)
+```
+
+## AR(2) fit
+
+$$
+y_{t} = \delta + \alpha_1 y_{t - 1} + \alpha_2y_{t - 2} + u_{t}, u_{t} \sim WN(\sigma^2)
+$$
+
+```{r}
+## ARIMA(2, 0, 0)
+fitAR2 <- arima(growthSeries, order = c(2, 0, 0)) ## AR(2)
+tsdiag(fitAR2)
+
+fitAR3 <- arima(growthSeries, order = c(3, 0, 0)) ## AR(2)
+fitAR0
+fitAR1
+fitAR2
+fitAR3
+```
+## Akaike information criterion (AIC)
+Choose the model with the lowest value of AIC.
+It is similar to the adjusted R^2 in linear regression models.
+
+
+$$
+\hat{y_{t}} = 0.0353 + 0.8152\hat{y}_{t - 1} \quad \text{ AR(1)}\\
+\hat{y_{t}} = 0.0353 + 0.6789\hat{y}_{t - 1} + 0.1630 \hat{y}_{t - 2} \quad \text{ AR(2)}
+$$
+
+```{r}
+fitAR25 <- arima(growthSeries, order = c(25, 0, 0)) ## AR(2)
+fitAR25
+```
+
+```{r}
+
+mean(growthSeries, na.rm = TRUE)
+predict(fitAR1, n.ahead = 40)
+```
+
+
+## Non-stationarity
+
+$$
+y_t = \alpha t + u_{t} \quad M1: \text{ linear trend} \\
+y_t = \alpha + y_{t - 1}  +u_{t} = \alpha t + \sum_{i = 1}^{t}u_{i} \quad M2: \text{ random walk with drift}
+$$
+
+$$
+M1: E(y_t) = \alpha t\\
+M2: y_{t} = \alpha t + \sum_{i = 1}^{t}u_{i}
+$$
+
+```{r}
+library(xts)
+library(urca)
+
+set.seed(432423)
+
+# Set series length
+n <- 1000
+
+# Generate n (independent) draws from the standard normal distribution
+# for the first random walk
+alpha <- 0.01
+Time <- 1:1000
+u <- rnorm(n)
+trend <- alpha * Time
+
+# Do the same for the second random walk
+
+y1 <- trend + u 
+y2 <- trend + cumsum(u)
+
+# Construct an xts object and plot the data
+
+timeIndex <- seq(as.Date('1980-01-01'), by="day", length.out = n)
+timeSeries <- xts(cbind(y1,y2), order.by = timeIndex)
+plot(timeSeries)
+```
+
+
+
+## Unit-root processes
+
+The characteristic equation of a process has a unit root.
+
+$$
+y_{t} = \alpha + y_{t - 1} + u_{t}\\
+\Delta y_{t} = y_{t} - y_{t - 1} = \alpha + u_{t}
+$$
+The first difference of the random walk process is stationary (because the random process $u_t$ is stationary). We say that the random walk is integrated with degree 1.
+
+## Simulation of random walk processes
+
+$$
+x_{t} = x_{t - 1} +u_{x,t}\\
+y_{t} = y_{t - 1} + u_{y, t}
+$$
+
+Linear regression model for 
+$$
+y_{t} = a + bx_{t} + e_{t}\\
+$$
+
+```{r}
+library(xts)
+# Set series length
+n <- 1000
+ux <- rnorm(n)
+uy <- rnorm(n)
+# Do the same for the second random walk
+x <- cumsum(ux)
+y <- cumsum(uy)
+
+#fit.xy <- lm(y ~ x)
+#summary(fit.xy)
+
+# Construct an xts object and plot the data
+# timeIndex <- seq(as.Date('1980-01-01'), by="day", length.out = n)
+# timeSeries <- xts(cbind(x,y), order.by = timeIndex)
+# plot(timeSeries)
+getwd()
+## save(fit.xy, file = "./test_model.fit.RData")
+load(file = "./test_model.fit.RData")
+```
+
+
+$$
+\hat{a} = -5.76639\\
+\hat{b} = -0.21734\\
+\hat{y}_{t} = \hat{a} + \hat{b}x_{t}\\
+$$
+
+t-value is the value of the statistic for testing:
+
+$$
+H_0: b = 0\\
+H_1: b \neq 0
+$$
+Probability (p-value): is used for the decision to reject $H_0$. We reject for low
+values of the p-value (< 0.05).
+
+The regression coefficient appears significantly different from zero (the expected value).
+
+The normal regression model relies on assumptions about the error term $e_t$ that are 
+not met when using non-stationary variables in the model. One should be wary of spurious results form the regression model.
+
+
+
