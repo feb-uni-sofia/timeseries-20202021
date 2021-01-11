@@ -239,6 +239,7 @@ $$
 var(c(2, 3, 10))
 acf(c(2, 3, 10), plot = FALSE)
 ```
+
 ## ARIMA
 
 Notation:
@@ -1274,9 +1275,11 @@ covarianaces do not depend on $t$).
 $$
 y_t = \delta t + u_{t} \quad M1: \text{ linear trend} \\
 $$
+
 $$
-E(y_{t}) = \alpha t \quad (\text{ i.e not mean-stationary} )
+E(y_{t}) = \delta t \quad (\text{ i.e not mean-stationary} )
 $$
+
 
 $$
 y_t = \delta + y_{t - 1}  +u_{t},\quad \delta \in R \quad \text{M2: random walk with drift}
@@ -1285,6 +1288,7 @@ $$
 $$
 y_t = \delta + y_{t - 1}  +u_{t} = \delta t + \sum_{i = 1}^{t}u_{i}
 $$
+
 $$
 M2: E(y_{t}) = \delta t + E\left(\sum_{i = 1}^{t}u_{i}\right) = \delta t
 $$
@@ -1315,7 +1319,13 @@ timeIndex <- seq(as.Date('1980-01-01'), by="day", length.out = n)
 timeSeries <- xts(cbind(y1,y2), order.by = timeIndex)
 plot(timeSeries)
 ```
-
+$$
+y_{t} = \alpha y_{t- 1} + u_{t}, \quad |\alpha| < 1\\
+y_{t} = \alpha (\alpha y_{t - 2} + u_{t - 1}) + u_{t}\\
+y_{t} = \alpha^2y_{t - 2} + \alpha u_{t - 1} + u_{t}\\
+y_{t} = \alpha^3y_{t - 3} + \alpha^2 u_{t - 2} + \alpha u_{t - 1} + u_{t}\\
+y_{t} = y_{t - 3} + u_{t - 2} + u_{t - 1} + u_{t}\\
+$$
 
 
 ## Unit-root processes
@@ -1335,16 +1345,18 @@ $$
 x_{t} = x_{t - 1} +u_{x,t}\\
 y_{t} = y_{t - 1} + u_{y, t}
 $$
+
 Linear regression model for 
 $$
 y_{t} = a + bx_{t} + e_{t}\\
-\sum_{i = 1}^{t}u_{y,i} = a + b\sum_{i=1}^{t}u_{y,t} + e_{t}
+\sum_{i = 1}^{t}u_{y,i} = a + b\sum_{i=1}^{t}u_{x,t} + e_{t}
 $$
 Assume for a moment that $a,b = 0$
 
 $$
 \sum_{i = 1}^{t}u_{y,i} = e_{t}
 $$
+
 $$
 Var\left(\sum_{i = 1}^{t}u_{y,i}\right) = \sum_{i = 1}^{t}Var\left(u_{y,i}\right) = \sum_{i=1}^{t}\sigma^2 = t\sigma^2
 $$
@@ -1401,5 +1413,92 @@ The regression coefficient appears significantly different from zero (the expect
 The normal regression model relies on assumptions about the error term $e_t$ that are 
 not met when using non-stationary variables in the model. One should be wary of spurious results form the regression model.
 
+## Unit root tests
 
+$$
+y_{t} = \delta_0 + \delta_1 t + x_{t}, \quad x_t \sim AR(1)\\
+x_{t} = \alpha_1 x_{t - 1} + u_{t}\\
+x_{t} = \alpha_1 Lx_t + u_{t}\\
+(1 - \alpha_1 L)x_t = u_{t}\\
+x_{t} = \frac{1}{(1 - \alpha_1 L)} u_{t} \quad \text{ if } x_{t} \text{ is stationary} \\
+y_{t} = \delta_0 + \delta_1 t + \frac{1}{(1 - \alpha_1 L)}u_{t} \quad \times (1 - \alpha_1 L)
+$$
+
+$$
+(1 - \alpha_1 L)y_{t} = \delta_0 (1 - \alpha_1 L) + \delta_1 t (1 - \alpha_1 L) + u_{t}
+$$
+$$
+y_{t} - \alpha_1y_{t - 1} = \delta_0 - \delta_0\alpha_1 + \delta_1t - \delta_1\alpha_1(t - 1) + u_t\\
+y_{t} = \alpha_1y_{t - 1} + \delta_0(1 - \alpha_1) + \delta_1t- \delta_1\alpha_1 t + \delta_1\alpha_1 + u_{t}\\
+y_{t} = \underbrace{\alpha}_{(1 - \alpha_1)\delta_0 + \delta_1\alpha_1} + \underbrace{\beta}_{(1 - \alpha_1)\delta_1} t + \underbrace{\rho}_{\alpha_1} y_{t - 1} + u_{t}
+$$
+
+$$
+y_t = \alpha + \beta t + \rho y_{t - 1} + u_{t}
+$$
+$$
+y_t = \rho y_{t - 1} + u_{t} \quad \text{type = "none"}\\
+y_t = \alpha + \rho y_{t - 1} + u_{t} \quad \text{type = "drift"}\\
+y_t = \alpha + \beta t + \rho y_{t - 1} + u_{t} \quad \text{type = "trend"}\\
+$$
+```{r}
+library(xts)
+library(urca)
+
+#####################################################
+## Simulation of random walks, spurious regression ##
+#####################################################
+
+# Set the seed for the random numbers generator
+# to ensure reproducibility of the results
+
+set.seed(123)
+
+# Set series length
+n <- 1000
+
+# Generate n (independent) draws from the standard normal distribution
+# for the first random walk
+u <- rnorm(n)
+x <- cumsum(u)
+
+#################################
+# Dickey Fuller unit root tests #
+#################################
+
+# Dickey-Fuller test applied to the first random walk
+summary(ur.df(x, selectlags = "Fixed", lags = 0))
+
+# Dickey-Fuller test applied to a stationary AR(1) process
+stationaryAR1 <- arima.sim(n = n, model = list(ar = c(0.5)))
+plot(stationaryAR1)
+
+summary(ur.df(stationaryAR1, selectlags = "Fixed", lags = 0, type="none"))
+
+# Dickey-Fuller test applied to a trend-stationary series with a linear trend
+
+trendStationary <- 0.2*(1:n) + stationaryAR1
+plot(trendStationary)
+
+## For series with zero level and without trend
+summary(ur.df(trendStationary, selectlags = "Fixed", lags = 0, type="none"))
+
+## For series with trend
+summary(ur.df(trendStationary, selectlags = "Fixed", lags = 0, type="trend"))
+
+## For series with non-zero level
+summary(ur.df(trendStationary, selectlags = "Fixed", lags = 0, type="drift"))
+
+# Problem 2
+## dat <- read.csv("https://s3.eu-central-1.amazonaws.com/sf-timeseries/data/LakeHuron.csv")
+
+## timeIndex <- seq(as.Date('1875-01-01'), as.Date("1972-01-01"), by="year")
+## timeIndex
+
+## timeSeries <- xts(dat$x, order.by = timeIndex)
+
+## plot(timeSeries)
+
+## summary(ur.df(timeSeries, type="drift"))
+```
 
