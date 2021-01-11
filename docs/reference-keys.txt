@@ -2,7 +2,12 @@ introduction
 covariance
 time-series-analysis-class-2
 purely-random-process-white-noise
-simulation-white-noise
+simulating-white-noise
 sample-empirical-covariance
-expected-value-of-y_t
+positive-linear-dependency
 exercise
+fit
+data-exploration
+fit-an-arp-process
+model-choice-1
+model-choice-2

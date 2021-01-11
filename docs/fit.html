@@ -4,11 +4,11 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Chapter 2 Sample covariance and sample correlation | Introduction to econometrics</title>
+  <title>Chapter 3 Fitting arima models | Introduction to econometrics</title>
   <meta name="description" content="This is a minimal example of using the bookdown package to write a book. The output format for this example is bookdown::gitbook." />
   <meta name="generator" content="bookdown 0.21 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Chapter 2 Sample covariance and sample correlation | Introduction to econometrics" />
+  <meta property="og:title" content="Chapter 3 Fitting arima models | Introduction to econometrics" />
   <meta property="og:type" content="book" />
   
   
@@ -16,7 +16,7 @@
   <meta name="github-repo" content="rstudio/bookdown-demo" />
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Chapter 2 Sample covariance and sample correlation | Introduction to econometrics" />
+  <meta name="twitter:title" content="Chapter 3 Fitting arima models | Introduction to econometrics" />
   
   <meta name="twitter:description" content="This is a minimal example of using the bookdown package to write a book. The output format for this example is bookdown::gitbook." />
   
@@ -31,8 +31,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="index.html"/>
-<link rel="next" href="fit.html"/>
+<link rel="prev" href="covariance.html"/>
+
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
@@ -716,220 +716,205 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="covariance" class="section level1">
-<h1><span class="header-section-number">Chapter 2</span> Sample covariance and sample correlation</h1>
-<div id="time-series-analysis-class-2" class="section level2">
-<h2><span class="header-section-number">2.1</span> Time series analysis class 2</h2>
-<p>Let us denote the realisations of a time series process with
+<div id="fit" class="section level1">
+<h1><span class="header-section-number">Chapter 3</span> Fitting arima models</h1>
+<p>Let us look at a real dataset of Bulgarian quarterly GDP figures from 2000 to 2017. Our goal will
+be to select a mathematical model for the quarterly GDP growth rates.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="fit.html#cb24-1"></a><span class="kw">library</span>(xts)</span>
+<span id="cb24-2"><a href="fit.html#cb24-2"></a><span class="co"># a) Read data</span></span>
+<span id="cb24-3"><a href="fit.html#cb24-3"></a>gdp &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&#39;https://raw.githubusercontent.com/feb-uni-sofia/timeseries-20202021/main/data/gdp_bg_qrt_2000-2017.csv&#39;</span>)</span>
+<span id="cb24-4"><a href="fit.html#cb24-4"></a></span>
+<span id="cb24-5"><a href="fit.html#cb24-5"></a><span class="co">## Create a time index from the column names &quot;Index&quot; in the gdp dataset.</span></span>
+<span id="cb24-6"><a href="fit.html#cb24-6"></a>timeIndex &lt;-<span class="st"> </span><span class="kw">as.yearqtr</span>(gdp<span class="op">$</span>Index, <span class="dt">format =</span> <span class="st">&#39;%YQ%q&#39;</span>)</span>
+<span id="cb24-7"><a href="fit.html#cb24-7"></a><span class="co">## Combine the values of the GDP (column called &quot;GDP&quot;) and the time index to create</span></span>
+<span id="cb24-8"><a href="fit.html#cb24-8"></a><span class="co">## a time series object.</span></span>
+<span id="cb24-9"><a href="fit.html#cb24-9"></a>gdpSeries &lt;-<span class="st"> </span><span class="kw">xts</span>(gdp<span class="op">$</span>GDP, <span class="dt">order.by =</span> timeIndex)</span></code></pre></div>
+<p>Before we compute the quarterly growth rates we will first examine the original series.</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="fit.html#cb25-1"></a><span class="kw">plot</span>(gdpSeries)</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="fit.html#cb26-1"></a><span class="kw">acf</span>(gdpSeries)</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-9-2.png" width="672" />
+A prominent feature in the dataset is a strong seasonal effect. Furthermore, the data appears to have a positive trend at least until 2009.</p>
+<p>Let us denote the data in this time series with
 <span class="math display">\[
-y: y_1, y_2,\ldots,y_T
-\]</span></p>
-<p>where <span class="math inline">\(y_1\)</span> is the first value of the series and <span class="math inline">\(y_T\)</span> is the last value of the series.</p>
-<p>The first lag of the series is defined as</p>
+y_{1}, y_{2}, y_{3},\ldots,y_{T}\\
+\]</span>
+where <span class="math inline">\(t = 1\)</span> corresponds to the first quarter of 2000 and <span class="math inline">\(t = T = 71\)</span> corresponds to the third quarter of 2017 (the last observation in the dataset).</p>
+<p>To compute the growth rates for each quarter compared to the same quarter during the previous year we will use a continuous growth rate defined as follows:</p>
 <p><span class="math display">\[
-y_{t - 1}: \text{ first lag}
+growthRate_{t} = \frac{y_{t} - y_{t - 1}}{y_{t - 4}} \approx \log(y_{t}) - \log(y_{t - 4})
 \]</span></p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="fit.html#cb27-1"></a><span class="co">## First we take the 4-th lag of the series and afterwards we take the difference</span></span>
+<span id="cb27-2"><a href="fit.html#cb27-2"></a><span class="co">## between the log values of the original series and the log values of the lag(4-th lag)</span></span>
+<span id="cb27-3"><a href="fit.html#cb27-3"></a>growthSeries &lt;-<span class="st"> </span><span class="kw">log</span>(gdpSeries) <span class="op">-</span><span class="st"> </span><span class="kw">log</span>(<span class="kw">lag</span>(gdpSeries, <span class="dt">k =</span> <span class="dv">4</span>))</span></code></pre></div>
+<div id="data-exploration" class="section level2">
+<h2><span class="header-section-number">3.1</span> Data exploration</h2>
+<p>In the previous section we have defined the growth rates we are about to model and we
+have computed the necessary growth rates series. Please note that the first four values
+of the growth series are missing (undefined), because the first quarter of 2001 is the first
+data point were we can apply the formula use to compute these growth rates. We cannot apply it to the last quarter of 2000, for example, because we lack data on the GDP in the last quarter of 1999.</p>
+<p>Before we begin to build our model let us examine the plot of the series as well as
+its autocorrelation and partial autocorrelation plots.</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="fit.html#cb28-1"></a><span class="co">## mean(growthSeries, na.rm = TRUE)</span></span>
+<span id="cb28-2"><a href="fit.html#cb28-2"></a><span class="kw">plot</span>(growthSeries)</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="fit.html#cb29-1"></a><span class="co">## As the growth series contains missing values we must instruct acf and pacf to </span></span>
+<span id="cb29-2"><a href="fit.html#cb29-2"></a><span class="co">## exclude these, otherwise acf/pacf will throw errors.</span></span>
+<span id="cb29-3"><a href="fit.html#cb29-3"></a></span>
+<span id="cb29-4"><a href="fit.html#cb29-4"></a><span class="co">## Draw the autocorrelation plot</span></span>
+<span id="cb29-5"><a href="fit.html#cb29-5"></a><span class="kw">acf</span>(growthSeries, <span class="dt">na.action =</span> na.omit)</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-11-2.png" width="672" /></p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="fit.html#cb30-1"></a><span class="co">## Draw the partial autocorrelation plot</span></span>
+<span id="cb30-2"><a href="fit.html#cb30-2"></a><span class="kw">pacf</span>(growthSeries, <span class="dt">na.action =</span> na.omit)</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-11-3.png" width="672" /></p>
+<p>The ACF plot show slowly decaying autocorrelations that disappear after approx. one year. This appears consistent with autoregressive models. The partial autocorrelation plot shows a single large and significat partial autocorrelation at lag 1. This is consistent with a first order autoregressive process so we will try fitting one as our next step.</p>
 </div>
-<div id="purely-random-process-white-noise" class="section level2">
-<h2><span class="header-section-number">2.2</span> Purely random process (white noise)</h2>
-<p>Let <span class="math inline">\(u_t, t = 1\ldots,T\)</span> be an uncorrelated, normally distributed zero mean random variables with constant variance <span class="math inline">\(\sigma^2\)</span>.</p>
+<div id="fit-an-arp-process" class="section level2">
+<h2><span class="header-section-number">3.2</span> Fit an AR(p) process</h2>
+<p>Based on the exploratory analysis we have chosen a AR(1) model for the GDP growth data.</p>
 <p><span class="math display">\[
-u_{t} \sim N(0, \sigma^2), \quad t=1,\ldots,T
-\]</span>
-We call <span class="math inline">\(u_{t}\)</span> a purely random or white noise process.</p>
-<p><span class="math display">\[
-E(u_{t}) = 0\\
-Var(u_{t}) = \sigma^2\\
-Cov(u_{t}, u_{t - k}) = 0 \quad \text{for} \quad k \neq 0
+y_{t} = \delta + \alpha y_{t - 1} + u_{t}, u_{t} \sim WN(\sigma^2): \text{AR(1)}
 \]</span></p>
-</div>
-<div id="simulating-white-noise" class="section level2">
-<h2><span class="header-section-number">2.3</span> Simulating white noise</h2>
-<p>Generate 100 values from a standard normal distribution (i.e. <span class="math inline">\(\sigma^2 = 1\)</span>) and create an arbitrary time index (e.i. 100 days starting from 2018-10-10).</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="covariance.html#cb5-1"></a><span class="kw">library</span>(xts)</span>
-<span id="cb5-2"><a href="covariance.html#cb5-2"></a><span class="co">## Select 100 values at random from the standard normal distribution (the defaults in rnorm are mean = 0 and sd = 1).</span></span>
-<span id="cb5-3"><a href="covariance.html#cb5-3"></a>randomValues &lt;-<span class="st"> </span><span class="kw">rnorm</span>(<span class="dv">100</span>)</span>
-<span id="cb5-4"><a href="covariance.html#cb5-4"></a></span>
-<span id="cb5-5"><a href="covariance.html#cb5-5"></a><span class="co">## Create a time index for xts</span></span>
-<span id="cb5-6"><a href="covariance.html#cb5-6"></a>timeIndex &lt;-<span class="st"> </span><span class="kw">seq.Date</span>(<span class="kw">as.Date</span>(<span class="st">&quot;2018-10-10&quot;</span>), <span class="dt">by =</span> <span class="st">&quot;day&quot;</span>, <span class="dt">length.out =</span> <span class="dv">100</span>)</span>
-<span id="cb5-7"><a href="covariance.html#cb5-7"></a><span class="co">## Combine the values and the time index</span></span>
-<span id="cb5-8"><a href="covariance.html#cb5-8"></a>u &lt;-<span class="st"> </span><span class="kw">xts</span>(randomValues, timeIndex)</span>
-<span id="cb5-9"><a href="covariance.html#cb5-9"></a><span class="co">## Plot the series</span></span>
-<span id="cb5-10"><a href="covariance.html#cb5-10"></a><span class="kw">plot</span>(u)</span></code></pre></div>
-<p><img src="timeseries2020_files/figure-html/unnamed-chunk-2-1.png" width="672" />
-From the plot you can wee that the series fluctuates around its mean (close to 0) and appears to have a constant variance. Most of the values lie between -2 and 2 as expected for values selected from a standard normal distribution.</p>
-<p><span class="math display">\[
-X \sim N(\mu, \sigma^2)\\
-\text{ roughly } 95\% \text{ of the realisations of X are expected to be in the interval} \\
-[\mu - 2\sigma, \mu + 2\sigma] \\
-\text{for } \mu = 1, \sigma^2 = 1\quad (\text{standard normal distribution})\\
-\text{we obtain } [0 - 2*1, 0 + 2 * 1] = [-2, 2]
-\]</span>
-To examine the correlation between the series and its first lag we create a scatter-plot of <span class="math inline">\(u_{t}\)</span> and <span class="math inline">\(u_{t - 1}\)</span>.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="covariance.html#cb6-1"></a><span class="co">## Create the first lag (u_{t - 1})</span></span>
-<span id="cb6-2"><a href="covariance.html#cb6-2"></a>uL1 &lt;-<span class="st"> </span><span class="kw">lag</span>(u)</span>
-<span id="cb6-3"><a href="covariance.html#cb6-3"></a><span class="co">## Next we combine the original series and the lag so that it is easier for plotting.</span></span>
-<span id="cb6-4"><a href="covariance.html#cb6-4"></a>combinedSeries &lt;-<span class="st"> </span><span class="kw">cbind</span>(u, uL1)</span>
-<span id="cb6-5"><a href="covariance.html#cb6-5"></a></span>
-<span id="cb6-6"><a href="covariance.html#cb6-6"></a><span class="co">## Finally we create the scatter-plot</span></span>
-<span id="cb6-7"><a href="covariance.html#cb6-7"></a><span class="kw">plot</span>(<span class="kw">as.data.frame</span>(uL1)[, <span class="dv">1</span>], <span class="kw">as.data.frame</span>(u)[, <span class="dv">1</span>], <span class="dt">xlab =</span> <span class="st">&quot;u_{t - 1}&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;u_{t}&quot;</span>, <span class="dt">main =</span> <span class="st">&quot;Scatterplot of u_t and u_{t - 1}&quot;</span>)</span></code></pre></div>
-<p><img src="timeseries2020_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
-<p>The plot indicates no association between <span class="math inline">\(u_{t}\)</span> and <span class="math inline">\(u_{t - 1}\)</span>.</p>
-</div>
-<div id="sample-empirical-covariance" class="section level2">
-<h2><span class="header-section-number">2.4</span> Sample (empirical) covariance</h2>
-<p>A key statistic for measuring the <em>linear</em> association between time series is the correlation coefficient. To define it we first examine the sample <em>covariance</em> between two series <span class="math inline">\(x_{t}\)</span> and <span class="math inline">\(y_{t}\)</span>.</p>
-<p>Let <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> be two random variables with <span class="math inline">\(T\)</span> realisations.
-<span class="math display">\[
-x: x_{1}, x_{2}, \ldots, x_{T}\\
-y: y_{1}, y_{2}, \ldots, y_{T}\\
-\]</span>
-The sample covariance is defined as:
-<span class="math display">\[
-Cov(x, y) = \frac{1}{T - 1}\sum_{t = 1}^{T}(x_t - \overline{x})(y_{t} - \overline{y})
-\]</span></p>
-<p>In order to see how it works we will examine the results from a couple of simulations.</p>
-<div id="positive-linear-dependency" class="section level3">
-<h3><span class="header-section-number">2.4.1</span> Positive linear dependency</h3>
-<p>First, let us define the relationship between <span class="math inline">\(x_{t}\)</span> and <span class="math inline">\(y_{t}\)</span> as follows.</p>
-<p><span class="math display">\[
-y_{t} = 1 + x_{t} + u_{t}, \quad u_{t} \sim WN(\sigma^2 = 5)
-\]</span>
-The above equation simply tells us that the value of <span class="math inline">\(y_{t}\)</span> is simply the value of <span class="math inline">\(x_{t}\)</span> plus one and the result of a normally distributed random variable. For simplicity, let <span class="math inline">\(x_{t} = t\)</span>.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="covariance.html#cb7-1"></a><span class="co">## Generate a vector of values for x: the integers from 1 to 50.</span></span>
-<span id="cb7-2"><a href="covariance.html#cb7-2"></a>x &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">50</span></span>
-<span id="cb7-3"><a href="covariance.html#cb7-3"></a><span class="co">## Draw values at random from a normal distribution with mean zero and variance 25</span></span>
-<span id="cb7-4"><a href="covariance.html#cb7-4"></a>noise &lt;-<span class="st"> </span><span class="dv">5</span><span class="op">*</span><span class="kw">rnorm</span>(<span class="dv">50</span>)</span>
-<span id="cb7-5"><a href="covariance.html#cb7-5"></a><span class="co">## Finally, generate the value for y according to the equation above</span></span>
-<span id="cb7-6"><a href="covariance.html#cb7-6"></a>y &lt;-<span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x <span class="op">+</span><span class="st"> </span>noise</span>
-<span id="cb7-7"><a href="covariance.html#cb7-7"></a></span>
-<span id="cb7-8"><a href="covariance.html#cb7-8"></a><span class="co">## Plot x and y</span></span>
-<span id="cb7-9"><a href="covariance.html#cb7-9"></a><span class="kw">plot</span>(x, y)</span>
-<span id="cb7-10"><a href="covariance.html#cb7-10"></a><span class="co">## Compute the mean of x and the mean of y</span></span>
-<span id="cb7-11"><a href="covariance.html#cb7-11"></a><span class="kw">mean</span>(x)</span></code></pre></div>
-<pre><code>## [1] 25.5</code></pre>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="covariance.html#cb9-1"></a><span class="kw">mean</span>(y)</span></code></pre></div>
-<pre><code>## [1] 27.41491</code></pre>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="covariance.html#cb11-1"></a><span class="co">## Draw a (red) vertical line at the mean of x</span></span>
-<span id="cb11-2"><a href="covariance.html#cb11-2"></a><span class="kw">abline</span>(<span class="dt">v =</span> <span class="kw">mean</span>(x), <span class="dt">col =</span> <span class="dv">3</span>, <span class="dt">lwd =</span> <span class="dv">2</span>)</span>
-<span id="cb11-3"><a href="covariance.html#cb11-3"></a></span>
-<span id="cb11-4"><a href="covariance.html#cb11-4"></a><span class="co">## Draw a (green) horizontal line at the mean of y</span></span>
-<span id="cb11-5"><a href="covariance.html#cb11-5"></a><span class="kw">abline</span>(<span class="dt">h =</span> <span class="kw">mean</span>(y), <span class="dt">col =</span> <span class="dv">2</span>, <span class="dt">lwd =</span> <span class="dv">2</span>)</span></code></pre></div>
-<p><img src="timeseries2020_files/figure-html/unnamed-chunk-4-1.png" width="672" />
-From the plot you will notice that most of the points fall in the lower-left and in the upper-right parts of the plot. Next examine the sign of the cross products <span class="math inline">\((x_t - \overline{x})(y_t - \overline{y})\)</span> that we find in the definition of the covariance.</p>
-<p><span class="math display">\[
-\overline{x} = \frac{1}{T}\sum_{t = 1}^{T}x_{t} \text{ the sample mean of } x \\
-\overline{y} = \frac{1}{T}\sum_{t = 1}^{T}y_{t} \text{ the sample mean of } y \\
-(x_t - \overline{x})(y_{t} - \overline{y}) &gt; 0 \text{ for points in the top right part}\\
-(x_t - \overline{x})(y_{t} - \overline{y}) &gt; 0 \text{ for points in the bottom left part}\\
-(x_t - \overline{x})(y_{t} - \overline{y}) &lt; 0 \text{ for points in the bottom right and top left parts}\\
-(y_t - \overline{y}) &gt; 0 \text{ for points above the red line}\\
-(y_t - \overline{y}) &lt; 0 \text{ for points below the red line}\\
-(x_t - \overline{x}) &gt; 0 \text{ for points to the right of the green line}\\
-(x_t - \overline{x}) &lt; 0 \text{ for points to the left of the green line}
-\]</span>
-You should notice that for a positive linear associaiton between <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> the cross products will be positive and therefor the covariance of <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> will be positive.</p>
-<p>You can compute the sample covariance between the <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> by using the <code>cov</code> function:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="covariance.html#cb12-1"></a><span class="co">## Sample covariance of x and y</span></span>
-<span id="cb12-2"><a href="covariance.html#cb12-2"></a><span class="kw">cov</span>(x, y)</span></code></pre></div>
-<pre><code>## [1] 218.0108</code></pre>
-<p>To see how the sign of the covariance changes for negative linear associations between <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span>, change the sign before <span class="math inline">\(x\)</span> and re-run the simulation.</p>
-<p>Unfortunately, the value of the covariance depends on the units of measurement of <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> (i.e. kg, mg, etc.). Try multiplying x or y or both by a constant and see how the covariance changes.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="covariance.html#cb14-1"></a><span class="kw">cov</span>(x, <span class="dv">50</span><span class="op">*</span>y)</span></code></pre></div>
-<pre><code>## [1] 10900.54</code></pre>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="covariance.html#cb16-1"></a><span class="kw">cov</span>(<span class="dv">10</span><span class="op">*</span>x, y)</span></code></pre></div>
-<pre><code>## [1] 2180.108</code></pre>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="covariance.html#cb18-1"></a><span class="kw">cov</span>(<span class="dv">10</span><span class="op">*</span>x, <span class="dv">10</span><span class="op">*</span>y)</span></code></pre></div>
-<pre><code>## [1] 21801.08</code></pre>
-<p>The dependency of the covariance on the unit of measurement of the variables makes it difficult to distinguish between strong and weak dependence. Therefore we introduce the correlation coefficient <span class="math inline">\(\rho(x, y)\)</span>. It is defined as the ratio of the covariance and the standard deviations of the variables.</p>
-<p>$$
-s^2(x) = <em>{t = 1}^{T}(x_t - )^2 \
-s^2(y) = </em>{t = 1}^{T}(y_t - )^2  \
-s(x) =  \
-s(y) =  \</p>
-<p>(x, y) =  
-$$
-It can be shown that the correlation coefficient is always less than or equal to 1 and greater than or equal to -1.</p>
-<p><span class="math display">\[
--1 \leq \rho(x, y) \leq 1
-\]</span></p>
-<p>It equals 1 for a perfect linear association between <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span>.</p>
-<p><span class="math display">\[
-y_{t} =  x_{t}
-\]</span></p>
-<p><span class="math display">\[
-\rho(x, y) = \rho(x, x) = \frac{Cov(x, x)}{\sqrt{s^2(x)s^2(x)}} = \frac{s^2(x)}{s^2(x)} = 1
-\]</span>
-In the above we use the fact that the covariance between <span class="math inline">\(x\)</span> and <span class="math inline">\(x\)</span> is simply the variance of <span class="math inline">\(x\)</span>:</p>
-<p><span class="math display">\[
-Cov(x, x) = \frac{1}{T - 1}\sum_{t = 1}^{T}(x_t - \overline{x})(x_t - \overline{x}) =\\ \frac{1}{T - 1}\sum_{t = 1}^{T}(x_t - \overline{x})^2 = Var(x) = s^2(x)
-\]</span></p>
-<p>The correlation coefficient equals -1 for a perfect negative linear association:</p>
-<p><span class="math display">\[
-y_{t} = -x_{t} \implies \frac{Cov(-x, x)}{\sqrt{s^2(-x)s^2(x)}} = -\frac{Cov(x, x)}{\sqrt{s^2(x)s^2(x)}} = -\frac{s^2(x)}{s^2(x)} = -1
-\]</span></p>
-<p>The above result also holds for other linear associations:</p>
-<p><span class="math display">\[
-y = a + bx, b &gt; 0\implies \rho(x, y) = 1\\
-y = a + bx, b &lt; 0\implies \rho(x, y) = -1\\
-\]</span>
-## Autocovariances and autocorrelations</p>
-<p>In the case of time series we are interested in describing the dependency pattern
-between the value of a series and its past values (lags).
-<span class="math display">\[
-y_t, y_{t - 1}, y_{t - 2},\ldots, y_{t - k}
-\]</span></p>
-<p><span class="math display">\[
-\gamma_0 = Cov(y_t, y_{t}) = Var(y_t) = s^2(x)\\
-\gamma_{1} = Cov(y_{t}, y_{t - 1}) \text{ first order autocovariance }\\
-\gamma_{2} = Cov(y_{t}, y_{t - 2}) \text{ second order autocovariance } \\
-\gamma_{3} =Cov(y_{t}, y_{t - 3}) \text{ third order autocovariance } \\
-\vdots \\
-\gamma_{k} =Cov(y_{t}, y_{t - k}) \text{ k-th order autocovariance } \\
-\]</span></p>
-<p><span class="math display">\[
-\rho_{0}= \rho(y_t, y_{t}) = 1 \\
-\rho_{1} = \rho(y_{t}, y_{t - 1}) \text{ first order autocorrelation }\\
-\rho_{2} = \rho(y_{t}, y_{t - 2}) \text{ second order autocorrelation } \\
-\rho_{3} =\rho(y_{t}, y_{t - 3}) \text{ third order autocorrelation } \\
-\vdots \\
-\rho_{k} =\rho(y_{t}, y_{t - k}) \text{ k-th order autocorrelation }
-\]</span></p>
-<p><span class="math display">\[
-\rho_1 = \frac{\gamma_1}{\gamma_0} \\
-\rho_2 = \frac{\gamma_2}{\gamma_0} \\
-\vdots\\
-\rho_k = \frac{\gamma_k}{\gamma_0}
-\]</span></p>
-</div>
-</div>
-<div id="exercise" class="section level2">
-<h2><span class="header-section-number">2.5</span> Exercise</h2>
-<p>Compute the sample first order autocovariance of the following time series.</p>
-<p>$$
-x: x_1, x_2, x_3\
-x: (2, 3, 10)\</p>
-<p>Cov(x_t, x_{t - 1}) = <em>{t = 1}^{T}(x_t - )(x</em>{t - 1} - )\
- = 5\
-<em>1 = Cov(x_t, x</em>{t - 1}) = [(2 - 5)(NA - 5) + (3 - 5)(2 - 5) + (10 - 5)(3 - 5)] =\
-= [NA + (-2)(-3) + (5)(-2)] = (6 -10) = -2\
-<em>1 = -2\
-</em>{1} = ? \</p>
-<p>s^2(x) = Var(x_{t}) = _{t = 1}^{T}=\
-[(2 - 5)^2 + (3 - 5)^2 + (10 - 5)^2] = [(-3)^2 + (-2)^2 + 5^2] = \
-[9 + 4 + 25] =  = 19\
-<em>0 = 19\
-</em>{1} =  =  = …
-$$</p>
-<p>We can check that our result is correct by running the same calculation with R:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="covariance.html#cb20-1"></a><span class="kw">var</span>(<span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">10</span>))</span></code></pre></div>
-<pre><code>## [1] 19</code></pre>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="covariance.html#cb22-1"></a><span class="kw">acf</span>(<span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">10</span>), <span class="dt">plot =</span> <span class="ot">FALSE</span>)</span></code></pre></div>
+<p>This model has two coefficients that we need to estimate (learn) from the data: <span class="math inline">\(\delta\)</span> and <span class="math inline">\(\alpha\)</span>. We will use the <code>arima</code> function to compute these estimates using a maximum likelihood method (not discussed in this class, but similar in spirit to the least squares method from the econometrics class).</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="fit.html#cb31-1"></a><span class="co">## Similar to lm()</span></span>
+<span id="cb31-2"><a href="fit.html#cb31-2"></a><span class="co">## ARIMA(p, d, q)</span></span>
+<span id="cb31-3"><a href="fit.html#cb31-3"></a>fitAR1 &lt;-<span class="st"> </span><span class="kw">arima</span>(growthSeries, <span class="dt">order =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>)) <span class="co">## AR(1)</span></span>
+<span id="cb31-4"><a href="fit.html#cb31-4"></a>fitAR1 <span class="co">## ar1: alpha</span></span></code></pre></div>
 <pre><code>## 
-## Autocorrelations of series &#39;c(2, 3, 10)&#39;, by lag
+## Call:
+## arima(x = growthSeries, order = c(1, 0, 0))
 ## 
-##      0      1      2 
-##  1.000 -0.105 -0.395</code></pre>
+## Coefficients:
+##          ar1  intercept
+##       0.8152     0.0353
+## s.e.  0.0665     0.0109
+## 
+## sigma^2 estimated as 0.0003066:  log likelihood = 175.4,  aic = -344.79</code></pre>
+<p>from the output of the <code>arima</code> function we obtain the estimates for <span class="math inline">\(\delta\)</span> and <span class="math inline">\(\alpha\)</span>.</p>
+<p><span class="math display">\[
+\hat{y}_{t + 1} = \hat{\delta} + \hat{\alpha} y_{t}\\
+\hat{\alpha} = 0.8152\\
+\hat{\delta} = 0.0353\\
+\hat{y_{t}} = 0.0353  + 0.8152\hat{y}_{t - 1}\\
+\]</span>
+To compute a one-period ahead prediction using the fitted model, use the <code>predict</code> function.</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="fit.html#cb33-1"></a><span class="co">## Use predict to compute the one </span></span>
+<span id="cb33-2"><a href="fit.html#cb33-2"></a><span class="kw">predict</span>(fitAR1, <span class="dt">n.ahead =</span> <span class="dv">1</span>)</span></code></pre></div>
+<pre><code>## $pred
+##          Qtr4
+## 18 0.03716986
+## 
+## $se
+##          Qtr4
+## 18 0.01751059</code></pre>
+<p>We predict a 3.7% percent growth for the last quarter of 2017 (compared to the last quarter of 2016).
+The <code>predict</code> function outputs two values: the point prediction and the estimated standard error of this prediction. To express the uncertainty inherent in the prediction we compute an approx. 95 percent prediction interval using the standard error.</p>
+<p>An approximate 95% prediction interval for the growth rate in 2017Q4 is given
+by [0.03716986 - 2<em>0.01751059, 0.03716986 + 2</em>0.01751059] = [0.00214868, 0.07219104].</p>
+<p>Note that ARIMA models in general are best suited for short-term predictions, because the quality of the prediction depends on the strength of the autocorrelations in the series (associations between present and past values). For periods far away from the latest observed value the ARIMA predictions collapse to the sample mean of the series.</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="fit.html#cb35-1"></a><span class="co">## Use predict to compute the one </span></span>
+<span id="cb35-2"><a href="fit.html#cb35-2"></a><span class="kw">predict</span>(fitAR1, <span class="dt">n.ahead =</span> <span class="dv">50</span>)</span></code></pre></div>
+<pre><code>## $pred
+##          Qtr1       Qtr2       Qtr3       Qtr4
+## 18                                  0.03716986
+## 19 0.03681630 0.03652808 0.03629314 0.03610162
+## 20 0.03594551 0.03581825 0.03571451 0.03562994
+## 21 0.03556101 0.03550482 0.03545901 0.03542167
+## 22 0.03539124 0.03536642 0.03534620 0.03532971
+## 23 0.03531627 0.03530532 0.03529639 0.03528911
+## 24 0.03528317 0.03527834 0.03527439 0.03527118
+## 25 0.03526856 0.03526642 0.03526468 0.03526326
+## 26 0.03526210 0.03526116 0.03526039 0.03525977
+## 27 0.03525925 0.03525884 0.03525850 0.03525822
+## 28 0.03525800 0.03525781 0.03525766 0.03525754
+## 29 0.03525744 0.03525736 0.03525729 0.03525724
+## 30 0.03525720 0.03525716 0.03525713 0.03525711
+## 31 0.03525709                                 
+## 
+## $se
+##          Qtr1       Qtr2       Qtr3       Qtr4
+## 18                                  0.01751059
+## 19 0.02259132 0.02541172 0.02712416 0.02820461
+## 20 0.02890024 0.02935336 0.02965063 0.02984652
+## 21 0.02997598 0.03006170 0.03011852 0.03015622
+## 22 0.03018125 0.03019787 0.03020890 0.03021624
+## 23 0.03022111 0.03022434 0.03022649 0.03022792
+## 24 0.03022887 0.03022950 0.03022992 0.03023020
+## 25 0.03023039 0.03023051 0.03023059 0.03023064
+## 26 0.03023068 0.03023070 0.03023072 0.03023073
+## 27 0.03023074 0.03023074 0.03023075 0.03023075
+## 28 0.03023075 0.03023075 0.03023075 0.03023075
+## 29 0.03023075 0.03023075 0.03023075 0.03023075
+## 30 0.03023075 0.03023075 0.03023075 0.03023075
+## 31 0.03023075</code></pre>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="fit.html#cb37-1"></a><span class="co">## Sample mean</span></span>
+<span id="cb37-2"><a href="fit.html#cb37-2"></a><span class="kw">mean</span>(growthSeries, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<pre><code>## [1] 0.03524203</code></pre>
+</div>
+<div id="model-choice-1" class="section level2">
+<h2><span class="header-section-number">3.3</span> Model choice (1)</h2>
+<p>Up to now we have discussed how to estimate the coefficients of a given ARIMA model using the <code>arima</code> function and how to compute predictions with <code>predict</code>, but we didn’t question whether the model can adequately describe our data or not. A model that fits the data poorly will likely result in inadequate predictions.</p>
+<p>Here we will discuss a graphical analysis of the model fit using <code>tsdiag</code>. In order to see how a poorly fitting model looks we will fit a AR(0) model to the data and examine it first.</p>
+<p><span class="math display">\[
+y_{t} = \delta + u_{t} \quad \text{AR(0)}
+\]</span></p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="fit.html#cb39-1"></a>fitAR0 &lt;-<span class="st"> </span><span class="kw">arima</span>(growthSeries, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>))</span>
+<span id="cb39-2"><a href="fit.html#cb39-2"></a>fitAR0</span></code></pre></div>
+<pre><code>## 
+## Call:
+## arima(x = growthSeries, order = c(0, 0, 0))
+## 
+## Coefficients:
+##       intercept
+##          0.0352
+## s.e.     0.0038
+## 
+## sigma^2 estimated as 0.0009676:  log likelihood = 137.44,  aic = -270.89</code></pre>
+<p>After fitting the AR(0) model we will examine its residuals, defined as:</p>
+<p><span class="math display">\[
+r_{t} = y_{t} - \hat{y}_t
+\]</span></p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="fit.html#cb41-1"></a><span class="kw">tsdiag</span>(fitAR0)</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p>The <code>tsdiag</code> function produces three plots. The first one (top) show the standardised residuals of the model fit. For a good fit we expect to see standardised residuals that fluctuate around zero with a constant variance (fluctuations). This is not the case for the AR(0) fit. We that the residuals are positive (i.e. our model systematically underestimates the growth rates) before 2009 and are negative afterwards (i.e. our model systematically overestimates the growth rates). This points to a poor model choice. From the plot of the growth series data it is easy to see why this is happening. The AR(0) model has a single coefficient (<span class="math inline">\(\delta\)</span>) and it effectively predicts each value of the series with the sample mean of the series.</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="fit.html#cb42-1"></a><span class="co">## Plot the growth series</span></span>
+<span id="cb42-2"><a href="fit.html#cb42-2"></a><span class="co">## Here we use plot.zoo instead of plot.xts as we usually do, because it</span></span>
+<span id="cb42-3"><a href="fit.html#cb42-3"></a><span class="co">## is easier to draw the horizontal line at the sample mean of the series.</span></span>
+<span id="cb42-4"><a href="fit.html#cb42-4"></a><span class="kw">plot.zoo</span>(growthSeries)</span>
+<span id="cb42-5"><a href="fit.html#cb42-5"></a></span>
+<span id="cb42-6"><a href="fit.html#cb42-6"></a><span class="co">## Draw a horizontal line at the mean (0.03524)</span></span>
+<span id="cb42-7"><a href="fit.html#cb42-7"></a><span class="kw">abline</span>(<span class="dt">h =</span> <span class="kw">mean</span>(growthSeries, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>), <span class="dt">col =</span> <span class="dv">2</span>)</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-17-1.png" width="672" />
+Because of the large shift after the financial crisis of 2009 the sample mean underestimates
+the growth rates before 2009 and overestimates the growth rates after that.</p>
+<p>The next two plots are related and they show the autocorrelations of the residuals. Good model should not have residuals with significant autocorrelations. For the AR(0) models the residuals are strongly correlated (as seen from the bars in the second plot) and the autocorrelation disappears only after the first year (4-th lag).</p>
+<p>The last plot show p-values of the Ljung-Box autocorrelations tests. The first point refers to the p-value of the Ljung-Box test for the first-order autocorrelation. It test the hypothesis:</p>
+<p><span class="math display">\[
+H_{0}: \rho_{1} = 0\\
+H_{1}: \rho_{1} \neq 0
+\]</span>
+The p-value of this test lies below the blue line in the plot which is drawn at 0.05. As the p-value is less than 0.05 we would reject the null hypothesis. A good model should not allow us to reject this hypothesis.</p>
+<p>The second point in the last plot corresponds to Ljung-Box test of the hypothesis:</p>
+<p><span class="math display">\[
+H_{0}: \rho_{1} = \rho_{2} = 0\\
+H_{1}: \text{ at least one of } \rho_{1}, \rho_{2} \neq 0\\
+\]</span></p>
+<p>Again, the p-value of this test leads us to reject the null hypothesis.</p>
+<p>Let us now turn to the diagnostic of our initial choice of a model, the AR(1) model.</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="fit.html#cb43-1"></a><span class="kw">tsdiag</span>(fitAR1)</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p>We see that the first plot looks much better than the one of the AR(0) model as we do not observe
+systematic overestimation or underestimation.</p>
+<p>Then next two plots also indicate an adequate fit as there are no significant autocorrelations in the residuals.</p>
+</div>
+<div id="model-choice-2" class="section level2">
+<h2><span class="header-section-number">3.4</span> Model choice (2)</h2>
+<p>Up until now we have examined the goodness of fit diagnostic of the AR(1) process and concluded that there are no significant autocorrelations in its residuals. However, we could raise the question whether we could fare better (i.e. describe the data better) with a more complex model, for example AR(2).</p>
+<p>The AR(2) model has one more parameter than the AR(1) model and is better able to fit more closely to the data.</p>
+<p><span class="math display">\[
+y_{t} = \delta + \alpha_1 y_{t - 1} + \alpha_2 y_{t - 2} + u_{t}
+\]</span></p>
+
 </div>
 </div>
             </section>
@@ -937,8 +922,8 @@ $$</p>
           </div>
         </div>
       </div>
-<a href="index.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="fit.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="covariance.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
