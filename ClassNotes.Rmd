@@ -1264,8 +1264,6 @@ predict(fitAR1, n.ahead = 40)
 
 ## Non-stationarity
 
-
-
 $$
 y_{t} = \alpha y_{t - 1} + u_{t}
 $$
@@ -1279,8 +1277,6 @@ $$
 $$
 E(y_{t}) = \delta t \quad (\text{ i.e not mean-stationary} )
 $$
-
-
 $$
 y_t = \delta + y_{t - 1}  +u_{t},\quad \delta \in R \quad \text{M2: random walk with drift}
 $$
@@ -1288,6 +1284,7 @@ $$
 $$
 y_t = \delta + y_{t - 1}  +u_{t} = \delta t + \sum_{i = 1}^{t}u_{i}
 $$
+
 
 $$
 M2: E(y_{t}) = \delta t + E\left(\sum_{i = 1}^{t}u_{i}\right) = \delta t
@@ -1337,6 +1334,7 @@ y_{t} = \delta + y_{t - 1} + u_{t}\\
 \Delta y_{t} = y_{t} - y_{t - 1} = \delta + u_{t}
 $$
 
+
 The first difference of the random walk process is stationary (because the random process $u_t$ is stationary). We say that the random walk is integrated with degree 1.
 
 ## Simulation of random walk processes
@@ -1346,16 +1344,22 @@ x_{t} = x_{t - 1} +u_{x,t}\\
 y_{t} = y_{t - 1} + u_{y, t}
 $$
 
+
 Linear regression model for 
 $$
 y_{t} = a + bx_{t} + e_{t}\\
+$$
+
+$$
 \sum_{i = 1}^{t}u_{y,i} = a + b\sum_{i=1}^{t}u_{x,t} + e_{t}
 $$
+
 Assume for a moment that $a,b = 0$
 
 $$
 \sum_{i = 1}^{t}u_{y,i} = e_{t}
 $$
+
 
 $$
 Var\left(\sum_{i = 1}^{t}u_{y,i}\right) = \sum_{i = 1}^{t}Var\left(u_{y,i}\right) = \sum_{i=1}^{t}\sigma^2 = t\sigma^2
@@ -1415,6 +1419,145 @@ not met when using non-stationary variables in the model. One should be wary of 
 
 ## Unit root tests
 
+
+### Unit root
+
+$$
+x_{t} = \delta + \alpha_1 x_{t - 1} + u_{t}
+$$
+$$
+(1 - \alpha_1 L)x_{t} = \delta + u_{t}
+$$
+The characteristic equation of the lag-polynomial
+$$
+\lambda - \alpha_1 = 0 \implies \lambda_1 = \alpha_1
+$$
+If some root of the characteristic equation equals 1 then we say that the process is a unit root process.
+
+$$
+\lambda_1 = \alpha_1 = 1 \implies x_{t} = \delta + x_{t - 1} + u_{t}
+$$
+
+```{r}
+library(xts)
+dat <- read.csv("https://s3.eu-central-1.amazonaws.com/sf-timeseries/data/LakeHuron.csv")
+timeIndex <- seq(as.Date('1875-01-01'), as.Date("1972-01-01"), by="year")
+timeIndex
+lakeLevel <- xts(dat$x, order.by = timeIndex)
+plot(lakeLevel)
+acf(lakeLevel)
+pacf(lakeLevel)
+```
+
+Assume that the data are generated from an AR(1) model. Test of unit root?
+$$
+x_{t} = \alpha_1 x_{t - 1} + u_{t}
+$$
+has a unit root if $\alpha_1 = 1$.
+
+```{r}
+summary(lm(lakeLevel ~ -1 + lag(lakeLevel)))
+```
+$$
+H_0: \alpha_1 = 1\\
+H_1: \alpha_1 < 1
+$$
+
+
+The default t-test in `summary.lm` refers to the 
+
+$$
+H_0: \alpha_1 = 0\\
+H_1: \alpha_1 \neq 0\\
+$$
+
+$$
+t-value_{\alpha_1 = 0} = \frac{\hat{\alpha}_1 - 0}{se(\hat{\alpha}_1)}\\
+t-value_{\alpha_1 = 1} = \frac{\hat{\alpha}_1 - 1}{se(\hat{\alpha}_1)} = \frac{0.9999917 - 1}{0.0001314} = -0.06316591\\
+$$
+
+```{r}
+library(urca)
+# Set the seed for the random numbers generator
+# to ensure reproducibility of the results
+
+set.seed(123)
+
+# Set series length
+n <- 1000
+
+# Generate n (independent) draws from the standard normal distribution
+# for the first random walk
+u <- rnorm(n)
+x <- cumsum(u)
+
+#################################
+# Dickey Fuller unit root tests #
+#################################
+
+# Dickey-Fuller test applied to the first random walk
+summary(ur.df(x, selectlags = "Fixed", lags = 0))
+```
+Decide whether to reject the null hypothesis?
+$$
+H_{0}: x_{t} \text{ has a unit root }\\
+H_{1}: x_{t} \text{ has no unit root }\\
+$$
+We reject $H_0$ for small values of the test-statistic. `ur.df` outputs the Dickey-Fuller critical values at 1%, 5% and 10% probability to wrongly reject a true null hypothesis. test-statistic = -1.067 > -1.62 (10pct critical value) => do not reject the null hypothesis.
+
+
+### Dickey-Fuller test with stationary data (AR(1))
+
+$$
+x_{t} = \alpha_1 x_{t - 1} + u_{t}, \alpha_1 = 0.5
+$$
+
+```{r}
+set.seed(123)
+
+# Set series length
+n <- 1000
+# Dickey-Fuller test applied to a stationary AR(1) process
+stationaryAR1 <- arima.sim(n = n, model = list(ar = c(0.5)))
+summary(ur.df(stationaryAR1, selectlags = "Fixed", lags = 0))
+```
+In the case of the stationary AR(1) process the Dickey-Fuller test rejects the null hypothesis (the process has unit root). The value of the test-statistic is -19.1258 and is less than -2.58 (the 1pct critical value) => reject the null hypothesis.
+
+### Stationary process with non-zero level
+
+$$
+x_{t} = 100 + \alpha_1x_{t- 1} + u_{t}, \quad \alpha_1 = 0.5
+$$
+
+
+```{r}
+# Dickey-Fuller test applied to a stationary AR(1) process
+stationaryAR1WithLevel <- stationaryAR1 + 100
+summary(ur.df(stationaryAR1WithLevel, selectlags = "Fixed", lags = 0, type = "none"))
+summary(ur.df(stationaryAR1WithLevel, selectlags = "Fixed", lags = 0, type = "drift"))
+```
+When the data have non-zero level use `type="drift"`. Use the first test-statistic (-19.1236) and compare it with the first set of critical values (tau2 -3.43 -2.86 -2.57). Here we reject the null hypothesis (process has unit root), because
+-19.1234 < -3.43 (the 1pct critical value).
+
+### Dickey-Fuller with trend
+
+$$
+x_{t} = 0.06t + \alpha_1 x_{t - 1} + u_{t}, \quad \alpha_1 = 0.5
+$$
+
+```{r}
+linearTrend <- 0.06*(1:n)
+trendStationary <- linearTrend + stationaryAR1
+plot(trendStationary)
+```
+```{r}
+summary(ur.df(trendStationary, selectlags = "Fixed", lags = 0, type = "drift"))
+summary(ur.df(trendStationary, selectlags = "Fixed", lags = 0, type = "trend"))
+```
+Again (as in the drift test) we compare the first test-statistic (-19.114) with the first set of critical values (tau3 -3.96 -3.41 -3.12). Here we reject the null hypothesis (has unit root), because -19.114 < 3.96 (the critical value at 1pct).
+
+
+
 $$
 y_{t} = \delta_0 + \delta_1 t + x_{t}, \quad x_t \sim AR(1)\\
 x_{t} = \alpha_1 x_{t - 1} + u_{t}\\
@@ -1424,9 +1567,11 @@ x_{t} = \frac{1}{(1 - \alpha_1 L)} u_{t} \quad \text{ if } x_{t} \text{ is stati
 y_{t} = \delta_0 + \delta_1 t + \frac{1}{(1 - \alpha_1 L)}u_{t} \quad \times (1 - \alpha_1 L)
 $$
 
+
 $$
 (1 - \alpha_1 L)y_{t} = \delta_0 (1 - \alpha_1 L) + \delta_1 t (1 - \alpha_1 L) + u_{t}
 $$
+
 $$
 y_{t} - \alpha_1y_{t - 1} = \delta_0 - \delta_0\alpha_1 + \delta_1t - \delta_1\alpha_1(t - 1) + u_t\\
 y_{t} = \alpha_1y_{t - 1} + \delta_0(1 - \alpha_1) + \delta_1t- \delta_1\alpha_1 t + \delta_1\alpha_1 + u_{t}\\
