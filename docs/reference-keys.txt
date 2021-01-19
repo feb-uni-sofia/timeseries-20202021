@@ -11,3 +11,8 @@ data-exploration
 fit-an-arp-process
 model-choice-1
 model-choice-2
+unit-root-tests
+dickey-fuller-tests
+no-level-no-trend
+non-zero-level-no-trend
+trend

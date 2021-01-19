@@ -24,7 +24,7 @@
 <meta name="author" content="Boyko Amarov" />
 
 
-<meta name="date" content="2021-01-11" />
+<meta name="date" content="2021-01-19" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -32,7 +32,7 @@
   
   
 <link rel="prev" href="covariance.html"/>
-
+<link rel="next" href="unit-root-tests.html"/>
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
@@ -696,6 +696,13 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="3.3" data-path="fit.html"><a href="fit.html#model-choice-1"><i class="fa fa-check"></i><b>3.3</b> Model choice (1)</a></li>
 <li class="chapter" data-level="3.4" data-path="fit.html"><a href="fit.html#model-choice-2"><i class="fa fa-check"></i><b>3.4</b> Model choice (2)</a></li>
 </ul></li>
+<li class="chapter" data-level="4" data-path="unit-root-tests.html"><a href="unit-root-tests.html"><i class="fa fa-check"></i><b>4</b> Unit root tests</a><ul>
+<li class="chapter" data-level="4.1" data-path="unit-root-tests.html"><a href="unit-root-tests.html#dickey-fuller-tests"><i class="fa fa-check"></i><b>4.1</b> Dickey-Fuller tests</a><ul>
+<li class="chapter" data-level="4.1.1" data-path="unit-root-tests.html"><a href="unit-root-tests.html#no-level-no-trend"><i class="fa fa-check"></i><b>4.1.1</b> No level, no trend</a></li>
+<li class="chapter" data-level="4.1.2" data-path="unit-root-tests.html"><a href="unit-root-tests.html#non-zero-level-no-trend"><i class="fa fa-check"></i><b>4.1.2</b> Non-zero level, no trend</a></li>
+<li class="chapter" data-level="4.1.3" data-path="unit-root-tests.html"><a href="unit-root-tests.html#trend"><i class="fa fa-check"></i><b>4.1.3</b> Trend</a></li>
+</ul></li>
+</ul></li>
 <li class="divider"></li>
 <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
 
@@ -911,10 +918,7 @@ systematic overestimation or underestimation.</p>
 <h2><span class="header-section-number">3.4</span> Model choice (2)</h2>
 <p>Up until now we have examined the goodness of fit diagnostic of the AR(1) process and concluded that there are no significant autocorrelations in its residuals. However, we could raise the question whether we could fare better (i.e. describe the data better) with a more complex model, for example AR(2).</p>
 <p>The AR(2) model has one more parameter than the AR(1) model and is better able to fit more closely to the data.</p>
-<p><span class="math display">\[
-y_{t} = \delta + \alpha_1 y_{t - 1} + \alpha_2 y_{t - 2} + u_{t}
-\]</span></p>
-
+<p>When selecting a model for a time series our goal is to find the most parsimonious model (less coefficients) that can still adequately describe the structure of the data (mean, variance, autocorrelations). One model summary statistic that can aid us in this choice is the Akaike Information Criterion (AIC). Its value is low when the model fits the data closely but is penalised for the number of coefficients estimated in that model. Thus when using the AIC we will select the model with the lowest AIC value.</p>
 </div>
 </div>
             </section>
@@ -922,8 +926,8 @@ y_{t} = \delta + \alpha_1 y_{t - 1} + \alpha_2 y_{t - 2} + u_{t}
           </div>
         </div>
       </div>
-<a href="covariance.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-
+<a href="covariance.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="unit-root-tests.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>

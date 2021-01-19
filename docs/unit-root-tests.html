@@ -4,11 +4,11 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Introduction to econometrics</title>
+  <title>Chapter 4 Unit root tests | Introduction to econometrics</title>
   <meta name="description" content="This is a minimal example of using the bookdown package to write a book. The output format for this example is bookdown::gitbook." />
   <meta name="generator" content="bookdown 0.21 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Introduction to econometrics" />
+  <meta property="og:title" content="Chapter 4 Unit root tests | Introduction to econometrics" />
   <meta property="og:type" content="book" />
   
   
@@ -16,7 +16,7 @@
   <meta name="github-repo" content="rstudio/bookdown-demo" />
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Introduction to econometrics" />
+  <meta name="twitter:title" content="Chapter 4 Unit root tests | Introduction to econometrics" />
   
   <meta name="twitter:description" content="This is a minimal example of using the bookdown package to write a book. The output format for this example is bookdown::gitbook." />
   
@@ -31,8 +31,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
+<link rel="prev" href="fit.html"/>
 
-<link rel="next" href="covariance.html"/>
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
@@ -723,31 +723,321 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="header">
-<h1 class="title">Introduction to econometrics</h1>
-<p class="author"><em>Boyko Amarov</em></p>
-<p class="date"><em>2021-01-19</em></p>
-</div>
-<div id="introduction" class="section level1">
-<h1><span class="header-section-number">Chapter 1</span> Introduction</h1>
-<p>A summary of class notes on time series analysis 2020/2021.</p>
-
-<!-- \newcommand{\bar}[1]{\bar{#1}} -->
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="index.html#cb1-1"></a><span class="kw">library</span>(xts)</span></code></pre></div>
-<pre><code>## Loading required package: zoo</code></pre>
+<div id="unit-root-tests" class="section level1">
+<h1><span class="header-section-number">Chapter 4</span> Unit root tests</h1>
+<div id="dickey-fuller-tests" class="section level2">
+<h2><span class="header-section-number">4.1</span> Dickey-Fuller tests</h2>
+<div id="no-level-no-trend" class="section level3">
+<h3><span class="header-section-number">4.1.1</span> No level, no trend</h3>
+<p>Consider a simple first order autoregressive model (AR(1)) with the constant <span class="math inline">\(\delta = 0\)</span>.</p>
+<p><span class="math display">\[
+y_{t} = \alpha_1 y_{t - 1} + u_{t}
+\]</span>
+We already know that for <span class="math inline">\(|alpha_1| &lt; 1\)</span> the process is stationary (i.e. its statistical properties: mean, variance and auto-covariances do not depend on the time index <span class="math inline">\(t\)</span>.). For <span class="math inline">\(\alpha_1 = 1\)</span> the process is non-stationary and behaves quite differently (see the simulation below)</p>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="unit-root-tests.html#cb44-1"></a><span class="kw">library</span>(xts)</span>
+<span id="cb44-2"><a href="unit-root-tests.html#cb44-2"></a>n &lt;-<span class="st"> </span><span class="dv">1000</span></span>
+<span id="cb44-3"><a href="unit-root-tests.html#cb44-3"></a><span class="co">## Select 1000 observations at random from the standard normal distribution</span></span>
+<span id="cb44-4"><a href="unit-root-tests.html#cb44-4"></a><span class="co">## (the default for rnorm)</span></span>
+<span id="cb44-5"><a href="unit-root-tests.html#cb44-5"></a>u &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n)</span>
+<span id="cb44-6"><a href="unit-root-tests.html#cb44-6"></a></span>
+<span id="cb44-7"><a href="unit-root-tests.html#cb44-7"></a><span class="co">## Sum the selected values cumulatively, i.e. randomWalk[1] = u[1], randomWalk[2] = u[1] + u[2], etc.</span></span>
+<span id="cb44-8"><a href="unit-root-tests.html#cb44-8"></a>randomWalk &lt;-<span class="st"> </span><span class="kw">cumsum</span>(u)</span>
+<span id="cb44-9"><a href="unit-root-tests.html#cb44-9"></a></span>
+<span id="cb44-10"><a href="unit-root-tests.html#cb44-10"></a><span class="co">## Simulate a stationary AR(1) process with alpha1 = 0.7</span></span>
+<span id="cb44-11"><a href="unit-root-tests.html#cb44-11"></a>alpha1 &lt;-<span class="st"> </span><span class="fl">0.7</span></span>
+<span id="cb44-12"><a href="unit-root-tests.html#cb44-12"></a>stationaryAR1 &lt;-<span class="st"> </span><span class="kw">arima.sim</span>(<span class="dt">n =</span> n, <span class="dt">model =</span> <span class="kw">list</span>(<span class="dt">ar =</span> <span class="kw">c</span>(alpha1)))</span>
+<span id="cb44-13"><a href="unit-root-tests.html#cb44-13"></a>timeIndex &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="kw">as.Date</span>(<span class="st">&quot;2020-10-10&quot;</span>), <span class="dt">by =</span><span class="st">&quot;day&quot;</span>, <span class="dt">length.out =</span> n)</span>
+<span id="cb44-14"><a href="unit-root-tests.html#cb44-14"></a><span class="co">## Combine the random walk and the AR(1) series into a data frame</span></span>
+<span id="cb44-15"><a href="unit-root-tests.html#cb44-15"></a><span class="co">## and pass that data frame to xts. We do this, because it is easier to </span></span>
+<span id="cb44-16"><a href="unit-root-tests.html#cb44-16"></a><span class="co">## plot the two series in _one_ plot when calling plot</span></span>
+<span id="cb44-17"><a href="unit-root-tests.html#cb44-17"></a>series &lt;-<span class="st"> </span><span class="kw">xts</span>(<span class="kw">data.frame</span>(randomWalk, stationaryAR1), <span class="dt">order.by =</span> timeIndex)</span>
+<span id="cb44-18"><a href="unit-root-tests.html#cb44-18"></a><span class="kw">plot</span>(series, <span class="dt">main =</span> <span class="kw">paste</span>(<span class="st">&quot;Random walk and AR(1) with alpha1 = &quot;</span>, alpha1))</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<p>From the plot you should notice that the stationary series fluctuates around its expected value (0) whereas the random walk series behaves quite differently without an obvious tendency to revert to its mean.</p>
+<p>For simplicity let us assume that we have observed a time series from a AR(1) model with an unknown coefficients <span class="math inline">\(\alpha_1\)</span>.</p>
+<p>We would like to test the hypothesis that the coefficient <span class="math inline">\(\alpha_1 = 1\)</span> (i.e. the process is a random walk) against the one-sided alternative that it is less than 1. Looking at the model equation we could think about using a simple t-test as we did in the introductory econometrics course. It is convenient to first transform the model by subtracting <span class="math inline">\(y_{t - 1}\)</span> from both sides of the equation, because the default t-tests produced from R functions
+used to fit the model to the data test the null hypothesis that the coefficient is zero.</p>
+<p><span class="math display">\[
+y_{t} - y_{t - 1} = \alpha_1 y_{t - 1} - y_{t - 1} + u_{t} \implies \\
+y_{t} - y_{t - 1} = (\alpha_1 - 1)y_{t - 1} + u_{t}\\
+\Delta y_{t} = (\alpha_1 - 1)y_{t - 1} + u_{t}
+\]</span></p>
+<p>With the transformed model we can now restate the unit root null hypothesis.</p>
+<p><span class="math display">\[
+H_{0}: \alpha_1 = 1 \Leftrightarrow H_{0}: \alpha_1 - 1 = 0
+\]</span>
+Instead of fitting the equation with the <code>lm</code> that we used in the econometrics course we will use a special function (<code>ur.df</code>) that is available from the <code>urca</code> package. We do this because the usual statistical theory behind the t-test for the regression coefficients does not hold under the null hypothesis and we need a special set of critical values (Dickey-Fuller critical values).</p>
+<p>It is easiest to see how the test works with an example. First we generate 1000 observations from a stationary AR(1) process with <span class="math inline">\(\alpha = 0.7\)</span>. Then we plot the series and perform the t-test using the Dickey-Fuller critical values produced by <code>ur.df</code>.</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="unit-root-tests.html#cb45-1"></a><span class="kw">library</span>(urca)</span>
+<span id="cb45-2"><a href="unit-root-tests.html#cb45-2"></a><span class="kw">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb45-3"><a href="unit-root-tests.html#cb45-3"></a><span class="co">## Set the simulation size (number of observations)</span></span>
+<span id="cb45-4"><a href="unit-root-tests.html#cb45-4"></a>n &lt;-<span class="st"> </span><span class="dv">1000</span></span>
+<span id="cb45-5"><a href="unit-root-tests.html#cb45-5"></a></span>
+<span id="cb45-6"><a href="unit-root-tests.html#cb45-6"></a><span class="co">##</span></span>
+<span id="cb45-7"><a href="unit-root-tests.html#cb45-7"></a>alpha1 &lt;-<span class="st"> </span><span class="fl">0.7</span></span>
+<span id="cb45-8"><a href="unit-root-tests.html#cb45-8"></a>stationaryAR1 &lt;-<span class="st"> </span><span class="kw">arima.sim</span>(<span class="dt">n =</span> n, <span class="dt">model =</span> <span class="kw">list</span>(<span class="dt">ar =</span> <span class="kw">c</span>(alpha1)))</span>
+<span id="cb45-9"><a href="unit-root-tests.html#cb45-9"></a><span class="kw">plot</span>(stationaryAR1, <span class="dt">main =</span> <span class="kw">paste</span>(<span class="st">&quot;Stationary AR(1) process with apha1 = &quot;</span>, alpha1))</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="unit-root-tests.html#cb46-1"></a><span class="kw">summary</span>(<span class="kw">ur.df</span>(stationaryAR1, <span class="dt">selectlags =</span> <span class="st">&quot;Fixed&quot;</span>, <span class="dt">lags =</span> <span class="dv">0</span>, <span class="dt">type =</span> <span class="st">&quot;none&quot;</span>))</span></code></pre></div>
 <pre><code>## 
-## Attaching package: &#39;zoo&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## ############################################### 
+## # Augmented Dickey-Fuller Test Unit Root Test # 
+## ############################################### 
 ## 
-##     as.Date, as.Date.numeric</code></pre>
+## Test regression none 
+## 
+## 
+## Call:
+## lm(formula = z.diff ~ z.lag.1 - 1)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -2.8481 -0.6362  0.0061  0.6700  3.2041 
+## 
+## Coefficients:
+##         Estimate Std. Error t value Pr(&gt;|t|)    
+## z.lag.1 -0.32618    0.02339  -13.94   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 1 on 998 degrees of freedom
+## Multiple R-squared:  0.1631, Adjusted R-squared:  0.1622 
+## F-statistic: 194.4 on 1 and 998 DF,  p-value: &lt; 2.2e-16
+## 
+## 
+## Value of test-statistic is: -13.9437 
+## 
+## Critical values for test statistics: 
+##       1pct  5pct 10pct
+## tau1 -2.58 -1.95 -1.62</code></pre>
+<p>You can find the critical values of the test in the <code>tau1</code> row in the critical values section of the <code>ur.df</code> output.
+To perform the test, compare the value of the t-statistic (t-value in the <code>z.lag.1</code> row) with the set of critical values. We reject the null hypothesis that the process has a unit root for <em>small</em> values of the t-statistic. In this example the t-statistic equals -13.94 and is less than the critical value at 1pct (-2.58), so we reject the null hypothesis. For this series this is the expected result, because we know that there is no unit-root in our generated data (<span class="math inline">\(\alpha_1 = 0.7\)</span>).</p>
+<p>Next, let us look at data generated from a random-walk process and let us apply the Dickey-Fuller test.</p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="unit-root-tests.html#cb48-1"></a><span class="kw">library</span>(xts)</span>
+<span id="cb48-2"><a href="unit-root-tests.html#cb48-2"></a>n &lt;-<span class="st"> </span><span class="dv">1000</span></span>
+<span id="cb48-3"><a href="unit-root-tests.html#cb48-3"></a><span class="co">## Select 1000 observations at random from the standard normal distribution</span></span>
+<span id="cb48-4"><a href="unit-root-tests.html#cb48-4"></a><span class="co">## (the default for rnorm)</span></span>
+<span id="cb48-5"><a href="unit-root-tests.html#cb48-5"></a>u &lt;-<span class="st"> </span><span class="kw">rnorm</span>(n)</span>
+<span id="cb48-6"><a href="unit-root-tests.html#cb48-6"></a></span>
+<span id="cb48-7"><a href="unit-root-tests.html#cb48-7"></a><span class="co">## Sum the selected values cumulatively, i.e. randomWalk[1] = u[1], randomWalk[2] = u[1] + u[2], etc.</span></span>
+<span id="cb48-8"><a href="unit-root-tests.html#cb48-8"></a>randomWalk &lt;-<span class="st"> </span><span class="kw">cumsum</span>(u)</span>
+<span id="cb48-9"><a href="unit-root-tests.html#cb48-9"></a></span>
+<span id="cb48-10"><a href="unit-root-tests.html#cb48-10"></a>timeIndex &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="kw">as.Date</span>(<span class="st">&quot;2020-10-10&quot;</span>), <span class="dt">by =</span><span class="st">&quot;day&quot;</span>, <span class="dt">length.out =</span> n)</span>
+<span id="cb48-11"><a href="unit-root-tests.html#cb48-11"></a>rwSeries &lt;-<span class="st"> </span><span class="kw">xts</span>(randomWalk, <span class="dt">order.by =</span> timeIndex)</span>
+<span id="cb48-12"><a href="unit-root-tests.html#cb48-12"></a><span class="kw">plot</span>(rwSeries, <span class="dt">main =</span> <span class="st">&quot;Data generated from a random walk process&quot;</span>)</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="unit-root-tests.html#cb49-1"></a><span class="kw">summary</span>(<span class="kw">ur.df</span>(rwSeries, <span class="dt">selectlags =</span> <span class="st">&quot;Fixed&quot;</span>, <span class="dt">lags =</span> <span class="dv">0</span>, <span class="dt">type =</span> <span class="st">&quot;none&quot;</span>))</span></code></pre></div>
+<pre><code>## 
+## ############################################### 
+## # Augmented Dickey-Fuller Test Unit Root Test # 
+## ############################################### 
+## 
+## Test regression none 
+## 
+## 
+## Call:
+## lm(formula = z.diff ~ z.lag.1 - 1)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -3.0633 -0.6613  0.0420  0.7365  3.3881 
+## 
+## Coefficients:
+##          Estimate Std. Error t value Pr(&gt;|t|)
+## z.lag.1 0.0007048  0.0016385    0.43    0.667
+## 
+## Residual standard error: 1.001 on 998 degrees of freedom
+## Multiple R-squared:  0.0001854,  Adjusted R-squared:  -0.0008164 
+## F-statistic: 0.1851 on 1 and 998 DF,  p-value: 0.6672
+## 
+## 
+## Value of test-statistic is: 0.4302 
+## 
+## Critical values for test statistics: 
+##       1pct  5pct 10pct
+## tau1 -2.58 -1.95 -1.62</code></pre>
+<p>In the case of the random-walk data we cannot reject the null hypothesis (has unit-root), because the value of the t-statistic is -0.691 and it is greater even than the critical value at 10 percent (-1.62).</p>
+</div>
+<div id="non-zero-level-no-trend" class="section level3">
+<h3><span class="header-section-number">4.1.2</span> Non-zero level, no trend</h3>
+<p>An important aspect of using the Dickey-Fuller test is that it is quite sensitive to deviations from its assumptions about the deterministic parts of the model (level and trend). Up to now our regression equation was:</p>
+<p><span class="math display">\[
+\Delta y_{t} = (\alpha_1 - 1)y_{t - 1} + u_{t}
+\]</span>
+and it is appropriate for data without a trend that fluctuate around zero.</p>
+<p>Let us see what happens when we perform the Dickey-Fuller for data with non-zero level. Again, it is easier to use a simulation to illustrate the problem. We will use the same data from the AR(1) model with <span class="math inline">\(\alpha_1 = 0.7\)</span> from the previous example and add a constant to all the values.</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="unit-root-tests.html#cb51-1"></a>stationaryAR1WithLevel &lt;-<span class="st"> </span>stationaryAR1 <span class="op">+</span><span class="st"> </span><span class="dv">100</span></span>
+<span id="cb51-2"><a href="unit-root-tests.html#cb51-2"></a><span class="kw">plot</span>(stationaryAR1WithLevel, <span class="dt">main=</span><span class="st">&quot;AR(1) with alpha_1 = 0.7 and delta = 100&quot;</span>)</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
+<p>We see that the only difference from the previous example is that the values of the AR(1) data fluctuate around 100 instead of 0.</p>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="unit-root-tests.html#cb52-1"></a><span class="kw">summary</span>(<span class="kw">ur.df</span>(stationaryAR1WithLevel, <span class="dt">selectlags =</span> <span class="st">&quot;Fixed&quot;</span>, <span class="dt">lags =</span> <span class="dv">0</span>, <span class="dt">type =</span> <span class="st">&quot;none&quot;</span>))</span></code></pre></div>
+<pre><code>## 
+## ############################################### 
+## # Augmented Dickey-Fuller Test Unit Root Test # 
+## ############################################### 
+## 
+## Test regression none 
+## 
+## 
+## Call:
+## lm(formula = z.diff ~ z.lag.1 - 1)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -3.2257 -0.6875  0.0074  0.7213  3.6709 
+## 
+## Coefficients:
+##           Estimate Std. Error t value Pr(&gt;|t|)
+## z.lag.1 -6.699e-05  3.457e-04  -0.194    0.846
+## 
+## Residual standard error: 1.094 on 998 degrees of freedom
+## Multiple R-squared:  3.761e-05,  Adjusted R-squared:  -0.0009644 
+## F-statistic: 0.03754 on 1 and 998 DF,  p-value: 0.8464
+## 
+## 
+## Value of test-statistic is: -0.1937 
+## 
+## Critical values for test statistics: 
+##       1pct  5pct 10pct
+## tau1 -2.58 -1.95 -1.62</code></pre>
+<p>Although there is no unit root in the data we see that the Dicke-Fuller test fails to reject the null hypothesis, because -0.1937 (t-statistic) &gt; -1.62 (critical value). This happens because we need to account for the non-zero level in the regression equation. Adding a constant it now becomes:</p>
+<p><span class="math display">\[
+\Delta y_{t} = \delta + (\alpha_1 - 1)y_{t - 1} + u_{t}
+\]</span>
+To use this equation when testing, set the <code>type = "drift"</code> option in <code>ur.df</code>.</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="unit-root-tests.html#cb54-1"></a><span class="kw">summary</span>(<span class="kw">ur.df</span>(stationaryAR1WithLevel, <span class="dt">selectlags =</span> <span class="st">&quot;Fixed&quot;</span>, <span class="dt">lags =</span> <span class="dv">0</span>, <span class="dt">type =</span> <span class="st">&quot;drift&quot;</span>))</span></code></pre></div>
+<pre><code>## 
+## ############################################### 
+## # Augmented Dickey-Fuller Test Unit Root Test # 
+## ############################################### 
+## 
+## Test regression drift 
+## 
+## 
+## Call:
+## lm(formula = z.diff ~ z.lag.1 + 1)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -2.8662 -0.6541 -0.0112  0.6532  3.1860 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) 32.68748    2.34354   13.95   &lt;2e-16 ***
+## z.lag.1     -0.32670    0.02342  -13.95   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 1.001 on 997 degrees of freedom
+## Multiple R-squared:  0.1633, Adjusted R-squared:  0.1625 
+## F-statistic: 194.6 on 1 and 997 DF,  p-value: &lt; 2.2e-16
+## 
+## 
+## Value of test-statistic is: -13.9495 97.2945 
+## 
+## Critical values for test statistics: 
+##       1pct  5pct 10pct
+## tau2 -3.43 -2.86 -2.57
+## phi1  6.43  4.59  3.78</code></pre>
+<p>Now compare the value of the t-statistic (-13.95) to the first set of critical values (tau2 -3.43 -2.86 -2.57). This time the test rejects the null hypothesis of a unit root at any reasonable significance level, because the value of the t-statistic is less than the critical value at 1pct (-3.43).</p>
+</div>
+<div id="trend" class="section level3">
+<h3><span class="header-section-number">4.1.3</span> Trend</h3>
+<p>Apart from a non-zero level we often want to perform unit-root tests with data that has trend (systematic increase/decrease with time). Let us look again at the AR(1) data with <span class="math inline">\(\alpha_1 = 0.7\)</span> and add a linear trend to it. Afterwards we will perform the Dickey-Fuller test and see how it performs.</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="unit-root-tests.html#cb56-1"></a>linearTrend &lt;-<span class="st"> </span><span class="fl">0.06</span><span class="op">*</span>(<span class="dv">1</span><span class="op">:</span>n)</span>
+<span id="cb56-2"><a href="unit-root-tests.html#cb56-2"></a>trendStationary &lt;-<span class="st"> </span>linearTrend <span class="op">+</span><span class="st"> </span>stationaryAR1</span>
+<span id="cb56-3"><a href="unit-root-tests.html#cb56-3"></a><span class="kw">plot</span>(trendStationary, <span class="dt">main=</span><span class="st">&quot;AR(1) with alpha_1 = 0.7 and a linear trend.&quot;</span>)</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
+<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="unit-root-tests.html#cb57-1"></a><span class="kw">summary</span>(<span class="kw">ur.df</span>(trendStationary, <span class="dt">selectlags =</span> <span class="st">&quot;Fixed&quot;</span>, <span class="dt">lags =</span> <span class="dv">0</span>, <span class="dt">type =</span> <span class="st">&quot;drift&quot;</span>))</span></code></pre></div>
+<pre><code>## 
+## ############################################### 
+## # Augmented Dickey-Fuller Test Unit Root Test # 
+## ############################################### 
+## 
+## Test regression drift 
+## 
+## 
+## Call:
+## lm(formula = z.diff ~ z.lag.1 + 1)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -3.2357 -0.7118 -0.0056  0.7250  3.6190 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)  
+## (Intercept)  0.120038   0.069074   1.738   0.0826 .
+## z.lag.1     -0.002022   0.001989  -1.017   0.3096  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 1.094 on 997 degrees of freedom
+## Multiple R-squared:  0.001035,   Adjusted R-squared:  3.343e-05 
+## F-statistic: 1.033 on 1 and 997 DF,  p-value: 0.3096
+## 
+## 
+## Value of test-statistic is: -1.0165 1.9838 
+## 
+## Critical values for test statistics: 
+##       1pct  5pct 10pct
+## tau2 -3.43 -2.86 -2.57
+## phi1  6.43  4.59  3.78</code></pre>
+<p>From the output of <code>ur.df</code> we see that the Dickey-Fuller test with drift that we
+used in the previous example fails to reject the null hypothesis of a unit root, because
+the value of the t-statistic (-1.0165) is greater that the critical value at 10pct (-2.57). This is unexpected, because we know that there is no unit root in our generated data. This result happens here, because we havn’t accounted for the linear trend in our regression equation.</p>
+<p>Let us add a term for the linear trend.</p>
+<p><span class="math display">\[
+\Delta y_{t} = \delta + \beta t + (\alpha_1 - 1)y_{t - 1} + u_{t}
+\]</span>
+To use the trend equation with <code>ur.df</code>, specify the <code>type="trend"</code> option.</p>
+<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="unit-root-tests.html#cb59-1"></a><span class="kw">summary</span>(<span class="kw">ur.df</span>(trendStationary, <span class="dt">selectlags =</span> <span class="st">&quot;Fixed&quot;</span>, <span class="dt">lags =</span> <span class="dv">0</span>, <span class="dt">type =</span> <span class="st">&quot;trend&quot;</span>))</span></code></pre></div>
+<pre><code>## 
+## ############################################### 
+## # Augmented Dickey-Fuller Test Unit Root Test # 
+## ############################################### 
+## 
+## Test regression trend 
+## 
+## 
+## Call:
+## lm(formula = z.diff ~ z.lag.1 + 1 + tt)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -2.8694 -0.6619 -0.0120  0.6560  3.1997 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  0.057687   0.063402    0.91    0.363    
+## z.lag.1     -0.326933   0.023439  -13.95   &lt;2e-16 ***
+## tt           0.019655   0.001414   13.90   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 1.001 on 996 degrees of freedom
+## Multiple R-squared:  0.1634, Adjusted R-squared:  0.1617 
+## F-statistic: 97.27 on 2 and 996 DF,  p-value: &lt; 2.2e-16
+## 
+## 
+## Value of test-statistic is: -13.948 66.0156 97.2733 
+## 
+## Critical values for test statistics: 
+##       1pct  5pct 10pct
+## tau3 -3.96 -3.41 -3.12
+## phi2  6.09  4.68  4.03
+## phi3  8.27  6.25  5.34</code></pre>
+<p>We see that adjusting the regression equation leads the Dickey-Fuller test to reject the null hypothesis of unit root, because the value of the t-statistic (-13.948) is less even than the critical value at 1pct (-3.96).</p>
+
+</div>
+</div>
 </div>
             </section>
 
           </div>
         </div>
       </div>
+<a href="fit.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
 
-<a href="covariance.html" class="navigation navigation-next navigation-unique" aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
@@ -778,7 +1068,7 @@ gitbook.start({
 "size": 2
 },
 "edit": {
-"link": "https://github.com/rstudio/bookdown-demo/edit/master/index.Rmd",
+"link": "https://github.com/rstudio/bookdown-demo/edit/master/01-intro.Rmd",
 "text": "Edit"
 },
 "history": {
