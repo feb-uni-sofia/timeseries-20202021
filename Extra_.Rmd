@@ -1,0 +1,81 @@
+---
+title: "Untitled"
+author: "Boyko Amarov"
+date: "11/30/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+## Random walk
+
+$$
+y_{t} = y_{t - 1} + e_{t}, \quad Ee_{t} = \mu, e_{t} \sim WN(\sigma^2)\\
+y_{t} = \mu + y_{t - 1} + u_{t}, \quad Eu_{t} = 0
+$$
+$$
+y_{t} = 0.9y_{t -1} -0.7y_{t - 2}  + e_{t}\\
+(1 - 0.9B + 0.7B^2)y_{t - 1} = e_{t}\\
+
+\lambda^2 - 0.9\lambda +0.7 = 0
+$$
+```{r}
+?polyroot
+polyroot(c(0.7, -0.9, 1))
+```
+
+```{r}
+simd <- arima.sim(1000, model = list(ar = c(0.5, 0.2)))
+acf(simd)
+pacf(simd)
+```
+
+$$
+y_{t} = \delta + e_{t} -\beta_1e_{t - 1}\\
+y_{t} = \delta + (1  -\beta_1 B)e_{t}\\
+\frac{y_t}{1 - \beta_1 B} = \frac{\delta}{1 - \beta_1B} + e_{t}
+$$
+
+
+$$
+y_{t} = e_{t} -0.9e_{t-1}
+$$
+
+```{r}
+library(xts)
+x <- rnorm(1000)
+xRw <- cumsum(x)
+rwTs <- xts(xRw, order.by = seq(as.Date("2020-12-12"), by = "day", length.out = 1000))
+acf(rwTs)
+```
+
+```{r}
+simMa <- arima.sim(1000, model = list(ma = c(-0.9)))
+acf(simMa)
+pacf(simMa)
+```
+
+

@@ -1025,7 +1025,6 @@ pacf(masim)
 
 ## AR(p) models
 
-
 ### Bulgaria GDP series (level)
 
 ```{r}
@@ -1475,7 +1474,21 @@ $$
 t-value_{\alpha_1 = 0} = \frac{\hat{\alpha}_1 - 0}{se(\hat{\alpha}_1)}\\
 t-value_{\alpha_1 = 1} = \frac{\hat{\alpha}_1 - 1}{se(\hat{\alpha}_1)} = \frac{0.9999917 - 1}{0.0001314} = -0.06316591\\
 $$
+## Dickey-Fuller test model
 
+AR(1)
+
+$$
+y_{t} = \alpha_1 y_{t - 1} + u_{t}
+$$
+Stationary when $|\alpha_1| < 1$. $\alpha = 1$ : random walk (integration of first order).
+
+
+## No trend, no level
+
+$$
+y_t = \alpha_1 y_{t - 1} + u_t
+$$
 ```{r}
 library(urca)
 # Set the seed for the random numbers generator
@@ -1489,20 +1502,82 @@ n <- 1000
 # Generate n (independent) draws from the standard normal distribution
 # for the first random walk
 u <- rnorm(n)
-x <- cumsum(u)
-
-#################################
-# Dickey Fuller unit root tests #
-#################################
+x <- cumsum(u) ## Random walk
 
 # Dickey-Fuller test applied to the first random walk
 summary(ur.df(x, selectlags = "Fixed", lags = 0))
 ```
+$$
+z_t = \alpha_1 z_{t - 1} + u_t\\
+z_t -z_{t - 1} = \alpha_1 z_{t - 1} - z_{t - 1} + u_t \implies \\
+z_t -z_{t - 1} = \Delta z_{t} = \underbrace{ (\alpha_1 - 1)}_{\rho} z_{t - 1} + u_t\\
+\Delta z_{t}= \rho z_{t - 1} + u_{t}
+$$
+
+
+## No trend, with non-zero level
+
+Dicker-Fuller test (2)
+$$
+\Delta z_{t}= \delta + \rho z_{t - 1} + u_{t}
+$$
+```{r}
+# Dickey-Fuller test applied to a stationary AR(1) process
+stationaryAR1 <- arima.sim(n = 1000, model = list(ar = c(0.7)))
+stationaryAR1WithLevel <- stationaryAR1 + 100
+summary(ur.df(stationaryAR1WithLevel, selectlags = "Fixed", lags = 0, type = "none"))
+summary(ur.df(stationaryAR1WithLevel, selectlags = "Fixed", lags = 0, type = "drift"))
+```
+## Data with trend and with level
+
+
+$$
+\Delta z_{t} = \delta + \beta t + \rho z_{t - 1} + u_{t}
+$$
+
+```{r}
+n <- 1000
+linearTrend <- 0.06*(1:n)
+trendStationary <- linearTrend + stationaryAR1
+plot(trendStationary)
+```
+
+```{r}
+summary(ur.df(trendStationary, selectlags = "Fixed", lags = 0, type = "drift"))
+summary(ur.df(trendStationary, selectlags = "Fixed", lags = 0, type = "trend"))
+```
+### Autoregressive of higher order
+
+$$
+y_{t} = \alpha_1y_{t-1} + \alpha_2y_{t - 2} + u_{t}
+$$
+There is a unit root if
+$$
+\alpha_1 + \alpha_2 = 1
+$$
+$$
+y_{t} = \alpha_1y_{t-1} + \alpha_2y_{t - 2} + u_{t}\\
+y_{t} = \alpha_1y_{t-1} + \alpha_2y_{t-1} - \alpha_2y_{t-1} + \alpha_2y_{t - 2} + u_{t}\\
+y_{t} = (\alpha_1 + \alpha_2)y_{t-1} + \alpha_2y_{t-1} - \alpha_2y_{t - 2} + u_{t}\\
+y_{t} = (\alpha_1 + \alpha_2)y_{t-1} - \alpha_2(y_{t - 2} - y_{t-1}) + u_{t}\\
+y_{t} = (\alpha_1 + \alpha_2)y_{t-1} - \alpha_2\Delta y_{t - 1} + u_{t} \implies \\
+y_{t} - y_{t - 1} = (\alpha_1 + \alpha_2)y_{t-1} - y_{t - 1} - \alpha_2\Delta y_{t - 1} + u_{t} \implies \\
+\Delta y_{t} = (\underbrace{\alpha_1 + \alpha_2 - 1}_{\rho})y_{t - 1} - \alpha_2\Delta y_{t - 1} + u_{t} \\
+$$
+
+```{r}
+summary(ur.df(trendStationary, selectlags = "Fixed", lags = 1, type = "trend"))
+```
+
+
+In the regression output from the Dickey-Fuller test $\rho$ corresponds to the first line (z.lag.1).
+
 Decide whether to reject the null hypothesis?
 $$
-H_{0}: x_{t} \text{ has a unit root }\\
+H_{0}: \rho = 0 \implies x_{t} \text{ has a unit root }\\
 H_{1}: x_{t} \text{ has no unit root }\\
 $$
+
 We reject $H_0$ for small values of the test-statistic. `ur.df` outputs the Dickey-Fuller critical values at 1%, 5% and 10% probability to wrongly reject a true null hypothesis. test-statistic = -1.067 > -1.62 (10pct critical value) => do not reject the null hypothesis.
 
 
@@ -1513,6 +1588,7 @@ x_{t} = \alpha_1 x_{t - 1} + u_{t}, \alpha_1 = 0.5
 $$
 
 ```{r}
+library(urca)
 set.seed(123)
 
 # Set series length
@@ -1581,11 +1657,13 @@ $$
 $$
 y_t = \alpha + \beta t + \rho y_{t - 1} + u_{t}
 $$
+
 $$
 y_t = \rho y_{t - 1} + u_{t} \quad \text{type = "none"}\\
 y_t = \alpha + \rho y_{t - 1} + u_{t} \quad \text{type = "drift"}\\
 y_t = \alpha + \beta t + \rho y_{t - 1} + u_{t} \quad \text{type = "trend"}\\
 $$
+
 ```{r}
 library(xts)
 library(urca)
@@ -1646,4 +1724,110 @@ summary(ur.df(trendStationary, selectlags = "Fixed", lags = 0, type="drift"))
 
 ## summary(ur.df(timeSeries, type="drift"))
 ```
+
+
+$$
+y_{t} = \delta + \alpha_1 y_{t - 1} + \alpha_2 y_{t - 2} + u_{t}
+$$
+
+
+
+$$
+y_{t} = \delta + \alpha y_{t - 1} + u_{t} \quad AR(1), |\alpha| < 1
+$$
+$$
+\text{Unconditional mean}\\
+\underbrace{E(y_{t})}_{\mu} = \delta + \alpha \underbrace{E(y_{t - 1})}_{\mu} + 0 \implies \mu = \delta + \alpha \mu\\
+\mu = \frac{\delta}{1 - \alpha}
+$$
+
+$$
+\text{Conditional mean}\\
+E(y_{t} | y_{t-1}, y_{t -2}, \ldots) = \delta + \alpha E(y_{t - 1}|y_{t-1}, y_{t - 2}, \ldots) + E(u_t|y_{t-1},\ldots)\\
+
+E(y_{t} | y_{t-1}, y_{t -2}, \ldots) = \delta + \alpha y_{t -1}
+$$
+
+
+$$
+\text{Unconditional variance}\\
+\underbrace{Var(y_{t})}_{\sigma^2_y} = Var(\delta) + \alpha^2\underbrace{Var(y_{t - 1})}_{\sigma^2_y} + Var(u_t)\\
+\sigma^2_y = 0 + \alpha^2\sigma^2_y + \sigma^2 \implies \\
+\sigma^2_y = \frac{\sigma^2}{1 - \alpha^2}
+$$
+
+$$
+\text{Conditional variance}\\
+Var(y_{t}|y_{t-1}) = Var(\delta + \alpha y_{t - 1} + u_{t}|y_{t - 1}) = \sigma^2_{t}
+$$
+
+
+
+## Prediction (MA(1))
+
+
+$$
+y_{t} = \mu + u_{t} - \beta u_{t - 1}\\
+y_{t + 1} = \mu + u_{t + 1} - \beta u_{t}\\
+\hat{y}_{t + 1 | t} = \mu + 0 - \beta \underbrace{u_{t}}_{????}\\
+\hat{u}_{t} = y_{t} - \hat{y}_{t}
+$$
+## Prediction with the conditional mean
+
+$$
+y_{t} = \mu + u_{t} - \beta u_{t - 1}\\
+E(y_t) = E(\mu + u_t -\beta u_{t - 1}) = \mu \quad \text{ unconditional mean}\\
+y_{t + 1} = \mu + u_{t + 1} - \beta u_{t}\\
+\hat{y}_{t + 1 |t} = E(y_{t + 1} | t) = E(\mu + u_{t + 1} - \beta u_{t} | t) = \mu -\beta u_{t} \quad \text{conditional mean, given the information up to time } t\\ 
+$$
+$$
+y_{t} = \mu + u_{t} - \beta u_{t - 1}\\
+\hat{y}_{t + 2|t} = E(y_{t + 2} | t) = \\
+E(y_{t + 2} | t) = E(\mu + u_{t + 2} - \beta u_{t +1}  | t) = \mu
+$$
+
+### ADF-Test (Augmented Dickey-Fuller test)
+
+$$
+y_{t} = \alpha_1 y_{t - 1} + \alpha_2y_{t - 2} + u_{t}
+$$
+$$
+y_{t} = \alpha_1 y_{t - 1} + \alpha_2y_{t-1} - \alpha_2y_{t-1} + \alpha_2y_{t - 2} + u_{t}\\
+y_{t} = (\alpha_1 + \alpha_2)y_{t - 1} - \alpha_2(y_{t - 1} - y_{t - 2}) \\
+y_{t} = (\alpha_1 + \alpha_2)y_{t - 1} - \alpha_2\Delta y_{t - 1} \\
+y_{t} - y_{t - 1} = (\alpha_1 + \alpha_2)y_{t - 1} - y_{t - 1} - \alpha_2\Delta y_{t - 1} \\
+\Delta y_{t} = (\alpha_1 + \alpha_2 - 1)y_{t - 1} - \alpha_2\Delta y_{t - 1} \\
+
+$$
+$$
+H_{0}: \alpha_1 + \alpha_2 = 1 <=> \text{ unit root}
+$$
+```{r}
+summary(ur.df(stationaryAR1, selectlags = "Fixed", lags = 2, type="drift"))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
