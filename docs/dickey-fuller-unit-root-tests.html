@@ -24,7 +24,7 @@
 <meta name="author" content="Boyko Amarov" />
 
 
-<meta name="date" content="2021-01-21" />
+<meta name="date" content="2021-02-01" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -700,6 +700,14 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="4.1" data-path="dickey-fuller-unit-root-tests.html"><a href="dickey-fuller-unit-root-tests.html#no-level-no-trend"><i class="fa fa-check"></i><b>4.1</b> No level, no trend</a></li>
 <li class="chapter" data-level="4.2" data-path="dickey-fuller-unit-root-tests.html"><a href="dickey-fuller-unit-root-tests.html#non-zero-level-no-trend"><i class="fa fa-check"></i><b>4.2</b> Non-zero level, no trend</a></li>
 <li class="chapter" data-level="4.3" data-path="dickey-fuller-unit-root-tests.html"><a href="dickey-fuller-unit-root-tests.html#linear-trend"><i class="fa fa-check"></i><b>4.3</b> Linear trend</a></li>
+<li class="chapter" data-level="4.4" data-path="dickey-fuller-unit-root-tests.html"><a href="dickey-fuller-unit-root-tests.html#monday-1.02.2020-discussion"><i class="fa fa-check"></i><b>4.4</b> Monday 1.02.2020 discussion</a></li>
+<li class="chapter" data-level="4.5" data-path="dickey-fuller-unit-root-tests.html"><a href="dickey-fuller-unit-root-tests.html#differencing"><i class="fa fa-check"></i><b>4.5</b> Differencing</a></li>
+<li class="chapter" data-level="4.6" data-path="dickey-fuller-unit-root-tests.html"><a href="dickey-fuller-unit-root-tests.html#arima10-1"><i class="fa fa-check"></i><b>4.6</b> ARIMA(1,0, 1)</a></li>
+<li class="chapter" data-level="4.7" data-path="dickey-fuller-unit-root-tests.html"><a href="dickey-fuller-unit-root-tests.html#arma2-0-3"><i class="fa fa-check"></i><b>4.7</b> ARMA(2, 0, 3)</a></li>
+<li class="chapter" data-level="4.8" data-path="dickey-fuller-unit-root-tests.html"><a href="dickey-fuller-unit-root-tests.html#arma4-0-2"><i class="fa fa-check"></i><b>4.8</b> ARMA(4, 0, 2)</a></li>
+<li class="chapter" data-level="4.9" data-path="dickey-fuller-unit-root-tests.html"><a href="dickey-fuller-unit-root-tests.html#model-selection"><i class="fa fa-check"></i><b>4.9</b> Model selection</a></li>
+<li class="chapter" data-level="4.10" data-path="dickey-fuller-unit-root-tests.html"><a href="dickey-fuller-unit-root-tests.html#goodness-of-fit"><i class="fa fa-check"></i><b>4.10</b> Goodness of fit</a></li>
+<li class="chapter" data-level="4.11" data-path="dickey-fuller-unit-root-tests.html"><a href="dickey-fuller-unit-root-tests.html#prediction-with-arimap-d-q"><i class="fa fa-check"></i><b>4.11</b> Prediction with ARIMA(p, d, q)</a></li>
 </ul></li>
 <li class="divider"></li>
 <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
@@ -1023,6 +1031,172 @@ To use the trend equation with <code>ur.df</code>, specify the <code>type="trend
 ## phi2  6.09  4.68  4.03
 ## phi3  8.27  6.25  5.34</code></pre>
 <p>We see that adjusting the regression equation leads the Dickey-Fuller test to reject the null hypothesis of unit root, because the value of the t-statistic (-13.948) is less even than the critical value at 1pct (-3.96).</p>
+</div>
+<div id="monday-1.02.2020-discussion" class="section level2">
+<h2><span class="header-section-number">4.4</span> Monday 1.02.2020 discussion</h2>
+</div>
+<div id="differencing" class="section level2">
+<h2><span class="header-section-number">4.5</span> Differencing</h2>
+<p><span class="math display">\[
+\Delta y_{t} = y_{t} - y_{t - 1}
+\]</span></p>
+<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="dickey-fuller-unit-root-tests.html#cb61-1"></a><span class="kw">library</span>(xts)</span>
+<span id="cb61-2"><a href="dickey-fuller-unit-root-tests.html#cb61-2"></a>rw &lt;-<span class="st"> </span><span class="kw">xts</span>(<span class="kw">cumsum</span>(<span class="kw">rnorm</span>(<span class="dv">100</span>)), <span class="dt">order.by =</span> <span class="kw">seq</span>(<span class="kw">as.Date</span>(<span class="st">&quot;2020-11-11&quot;</span>), <span class="dt">by =</span> <span class="st">&quot;day&quot;</span>, <span class="dt">length.out =</span> <span class="dv">100</span>))</span>
+<span id="cb61-3"><a href="dickey-fuller-unit-root-tests.html#cb61-3"></a><span class="kw">plot</span>(rw)</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="dickey-fuller-unit-root-tests.html#cb62-1"></a>rwdiff &lt;-<span class="st"> </span>rw <span class="op">-</span><span class="st"> </span><span class="kw">lag</span>(rw)</span></code></pre></div>
+<p>ARIMA(p, 0, q)</p>
+<p>$$</p>
+<p>$$</p>
+<div class="sourceCode" id="cb63"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb63-1"><a href="dickey-fuller-unit-root-tests.html#cb63-1"></a><span class="kw">set.seed</span>(<span class="dv">1434</span>)</span>
+<span id="cb63-2"><a href="dickey-fuller-unit-root-tests.html#cb63-2"></a>n &lt;-<span class="st"> </span><span class="dv">1671</span></span>
+<span id="cb63-3"><a href="dickey-fuller-unit-root-tests.html#cb63-3"></a><span class="co">## ARIMA(2, 0, 3)</span></span>
+<span id="cb63-4"><a href="dickey-fuller-unit-root-tests.html#cb63-4"></a>x &lt;-<span class="st"> </span><span class="kw">arima.sim</span>(<span class="dt">n=</span>n, <span class="dt">model =</span> <span class="kw">list</span>(<span class="dt">ar=</span><span class="kw">c</span>(<span class="fl">0.3</span>, <span class="fl">0.2</span>), <span class="dt">ma=</span><span class="kw">c</span>(<span class="fl">0.5</span>, <span class="fl">0.3</span>, <span class="fl">0.1</span>)))</span>
+<span id="cb63-5"><a href="dickey-fuller-unit-root-tests.html#cb63-5"></a><span class="kw">plot</span>(x)</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
+<p>MA(1), MA(2), MA(3), MA(4), ARMA(1,1) , ARMA(1,2) , ARMA(1,4) , ARMA(2,1) , ARMA(3,3) , ARMA(3,5).</p>
+<p><span class="math display">\[
+y_{t} = \delta + u_{t} + \beta_1 u_{t - 1} \quad \text{MA(1)}
+\]</span>
+## ARIMA(0, 0, 1)</p>
+<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="dickey-fuller-unit-root-tests.html#cb64-1"></a><span class="co">## MA(1): ARIMA(0, 0, 1)</span></span>
+<span id="cb64-2"><a href="dickey-fuller-unit-root-tests.html#cb64-2"></a>ma1 &lt;-<span class="st"> </span><span class="kw">arima</span>(x, <span class="dt">order=</span><span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>))</span>
+<span id="cb64-3"><a href="dickey-fuller-unit-root-tests.html#cb64-3"></a>ma1</span></code></pre></div>
+<pre><code>## 
+## Call:
+## arima(x = x, order = c(0, 0, 1))
+## 
+## Coefficients:
+##          ma1  intercept
+##       0.5947    -0.0197
+## s.e.  0.0149     0.0479
+## 
+## sigma^2 estimated as 1.509:  log likelihood = -2714.87,  aic = 5435.74</code></pre>
+<p><span class="math display">\[
+\hat{y}_{t} = -0.0197 + 0.5947 \hat{u}_{t - 1}
+\]</span></p>
+<p><span class="math display">\[
+y_{t} = \delta + u_{t} + \beta_1 u_{t - 1} + \beta_2 u_{t - 2} \quad \text{MA(2)}
+\]</span>
+## ARIMA(0, 0, 2)</p>
+<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="dickey-fuller-unit-root-tests.html#cb66-1"></a><span class="co">## MA(2): ARIMA(0, 0, 2)</span></span>
+<span id="cb66-2"><a href="dickey-fuller-unit-root-tests.html#cb66-2"></a>ma2 &lt;-<span class="st"> </span><span class="kw">arima</span>(x, <span class="dt">order=</span><span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>))</span>
+<span id="cb66-3"><a href="dickey-fuller-unit-root-tests.html#cb66-3"></a>ma2</span></code></pre></div>
+<pre><code>## 
+## Call:
+## arima(x = x, order = c(0, 0, 2))
+## 
+## Coefficients:
+##          ma1     ma2  intercept
+##       0.7102  0.4587    -0.0188
+## s.e.  0.0229  0.0192     0.0574
+## 
+## sigma^2 estimated as 1.17:  log likelihood = -2502.6,  aic = 5013.2</code></pre>
+</div>
+<div id="arima10-1" class="section level2">
+<h2><span class="header-section-number">4.6</span> ARIMA(1,0, 1)</h2>
+<p><span class="math display">\[
+y_{t} = \delta + \alpha_1 y_{t - 1} + u_{t} + \beta_1u_{t - 1}
+\]</span></p>
+<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="dickey-fuller-unit-root-tests.html#cb68-1"></a><span class="co">## ARMA(1, 1): ARIMA(1, 0, 1)</span></span>
+<span id="cb68-2"><a href="dickey-fuller-unit-root-tests.html#cb68-2"></a>arima1<span class="fl">.1</span> &lt;-<span class="st"> </span><span class="kw">arima</span>(x, <span class="dt">order=</span><span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>))</span>
+<span id="cb68-3"><a href="dickey-fuller-unit-root-tests.html#cb68-3"></a>arima1<span class="fl">.1</span></span></code></pre></div>
+<pre><code>## 
+## Call:
+## arima(x = x, order = c(1, 0, 1))
+## 
+## Coefficients:
+##          ar1     ma1  intercept
+##       0.7503  0.0501    -0.0143
+## s.e.  0.0196  0.0265     0.1052
+## 
+## sigma^2 estimated as 1.05:  log likelihood = -2412.26,  aic = 4832.53</code></pre>
+</div>
+<div id="arma2-0-3" class="section level2">
+<h2><span class="header-section-number">4.7</span> ARMA(2, 0, 3)</h2>
+<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="dickey-fuller-unit-root-tests.html#cb70-1"></a><span class="co">## ARMA(1, 1): ARIMA(1, 0, 1)</span></span>
+<span id="cb70-2"><a href="dickey-fuller-unit-root-tests.html#cb70-2"></a>arima2<span class="fl">.3</span> &lt;-<span class="st"> </span><span class="kw">arima</span>(x, <span class="dt">order=</span><span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">3</span>))</span>
+<span id="cb70-3"><a href="dickey-fuller-unit-root-tests.html#cb70-3"></a>arima2<span class="fl">.3</span></span></code></pre></div>
+<pre><code>## 
+## Call:
+## arima(x = x, order = c(2, 0, 3))
+## 
+## Coefficients:
+##          ar1     ar2     ma1     ma2     ma3  intercept
+##       0.5429  0.0078  0.2621  0.2956  0.0851    -0.0159
+## s.e.  0.3392  0.2209  0.3384  0.0638  0.0818     0.0900
+## 
+## sigma^2 estimated as 1.016:  log likelihood = -2384.64,  aic = 4783.28</code></pre>
+</div>
+<div id="arma4-0-2" class="section level2">
+<h2><span class="header-section-number">4.8</span> ARMA(4, 0, 2)</h2>
+<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="dickey-fuller-unit-root-tests.html#cb72-1"></a><span class="co">## ARMA(1, 1): ARIMA(1, 0, 1)</span></span>
+<span id="cb72-2"><a href="dickey-fuller-unit-root-tests.html#cb72-2"></a>arima4<span class="fl">.2</span> &lt;-<span class="st"> </span><span class="kw">arima</span>(x, <span class="dt">order=</span><span class="kw">c</span>(<span class="dv">4</span>, <span class="dv">0</span>, <span class="dv">2</span>))</span>
+<span id="cb72-3"><a href="dickey-fuller-unit-root-tests.html#cb72-3"></a>arima4<span class="fl">.2</span></span></code></pre></div>
+<pre><code>## 
+## Call:
+## arima(x = x, order = c(4, 0, 2))
+## 
+## Coefficients:
+##          ar1      ar2     ar3     ar4      ma1     ma2  intercept
+##       1.3683  -0.7358  0.0700  0.0922  -0.5648  0.3730    -0.0153
+## s.e.  0.1883   0.2204  0.1156  0.0401   0.1883  0.1176     0.0968
+## 
+## sigma^2 estimated as 1.014:  log likelihood = -2383.07,  aic = 4782.15</code></pre>
+</div>
+<div id="model-selection" class="section level2">
+<h2><span class="header-section-number">4.9</span> Model selection</h2>
+<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="dickey-fuller-unit-root-tests.html#cb74-1"></a><span class="kw">paste</span>(<span class="st">&quot;MA(1)&quot;</span>, ma1<span class="op">$</span>aic, <span class="dt">sep =</span> <span class="st">&quot;: &quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;MA(1): 5435.74296086164&quot;</code></pre>
+<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="dickey-fuller-unit-root-tests.html#cb76-1"></a><span class="kw">paste</span>(<span class="st">&quot;MA(2)&quot;</span>, ma1<span class="op">$</span>aic, <span class="dt">sep =</span> <span class="st">&quot;: &quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;MA(2): 5435.74296086164&quot;</code></pre>
+<div class="sourceCode" id="cb78"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb78-1"><a href="dickey-fuller-unit-root-tests.html#cb78-1"></a><span class="kw">paste</span>(<span class="st">&quot;MA(2)&quot;</span>, ma1<span class="op">$</span>aic, <span class="dt">sep =</span> <span class="st">&quot;: &quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;MA(2): 5435.74296086164&quot;</code></pre>
+<div class="sourceCode" id="cb80"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb80-1"><a href="dickey-fuller-unit-root-tests.html#cb80-1"></a><span class="kw">paste</span>(<span class="st">&quot;ARIMA(1, 0, 1)&quot;</span>, arima1<span class="fl">.1</span><span class="op">$</span>aic, <span class="dt">sep =</span> <span class="st">&quot;: &quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;ARIMA(1, 0, 1): 4832.52964951548&quot;</code></pre>
+<div class="sourceCode" id="cb82"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb82-1"><a href="dickey-fuller-unit-root-tests.html#cb82-1"></a><span class="kw">paste</span>(<span class="st">&quot;ARIMA(2, 0, 3)&quot;</span>, arima2<span class="fl">.3</span><span class="op">$</span>aic, <span class="dt">sep =</span> <span class="st">&quot;: &quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;ARIMA(2, 0, 3): 4783.27615582945&quot;</code></pre>
+<div class="sourceCode" id="cb84"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb84-1"><a href="dickey-fuller-unit-root-tests.html#cb84-1"></a><span class="kw">paste</span>(<span class="st">&quot;ARIMA(4, 0, 2)&quot;</span>, arima4<span class="fl">.2</span><span class="op">$</span>aic, <span class="dt">sep =</span> <span class="st">&quot;: &quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;ARIMA(4, 0, 2): 4782.14955564431&quot;</code></pre>
+<p>Akaike Information Criterion (AIC)
+Schwarz Information Criterion (BIC)</p>
+<p>AIC/BIC have two components:</p>
+<ol style="list-style-type: decimal">
+<li>component decreases when the model fits the data closely</li>
+<li>component increases with the complexity of the model (number of coefficients)</li>
+</ol>
+<p>We seek the closest possible fit with the least number of coefficients (less complexity).</p>
+<p>=&gt; choose the model with the smallest value of AIC/BIC.</p>
+</div>
+<div id="goodness-of-fit" class="section level2">
+<h2><span class="header-section-number">4.10</span> Goodness of fit</h2>
+<p><span class="math display">\[
+r_{t} = y_{t} - \hat{y}_t
+\]</span></p>
+<p><span class="math inline">\(\hat{y}_{t}\)</span> comes from the model fit!</p>
+<div class="sourceCode" id="cb86"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb86-1"><a href="dickey-fuller-unit-root-tests.html#cb86-1"></a><span class="kw">tsdiag</span>(ma1)</span></code></pre></div>
+<p><img src="timeseries2020_files/figure-html/unnamed-chunk-35-1.png" width="672" /></p>
+</div>
+<div id="prediction-with-arimap-d-q" class="section level2">
+<h2><span class="header-section-number">4.11</span> Prediction with ARIMA(p, d, q)</h2>
+<p>ARIMA(1, 1)</p>
+<p><span class="math display">\[
+y_{t} = \delta + \alpha_1 y_{t - 1} + u_{t} + \beta_1 u_{t - 1}
+\]</span>
+We would like to predict the value <span class="math inline">\(y_{t + k}\)</span> with the information available at epoch <span class="math inline">\(t\)</span>.</p>
+<p>At <span class="math inline">\(t\)</span> we know all the observed value <span class="math inline">\(y_{t}, y_{t-1}, y_{t-2},\ldots\)</span>, etc. So with the info. at epoch <span class="math inline">\(t\)</span> the past values of the series are known and not random variables. <span class="math inline">\(I_{t}\)</span> denotes all the info available at <span class="math inline">\(t\)</span>.</p>
+<p><span class="math display">\[
+k = 1\quad \text{one-period ahead prediction}\\
+E(y_{t + 1}|I_{t}) = E(\delta + \alpha_1 y_{t} + u_{t + 1} + \beta_1 u_{t}|I_{t})\\
+E(y_{t + 1}|I_{t}) = \delta + E(\alpha_1 y_{t}|I_t) + E(u_{t + 1}|I_t) + E(\beta_1 u_{t}|I_{t})\\
+E(y_{t + 1}|I_{t}) = \delta + \alpha_1 y_{t} + \beta_1 u_{t}\\
+\]</span>
+<span class="math display">\[
+\hat{y}_{t + 1|t} = \hat{\delta} + \hat{\alpha_1}y_{t} + \hat{\beta}_1\hat{u}_t
+\]</span>
+<span class="math display">\[
+\hat{\delta}, \hat{\alpha}_1, \hat{\alpha}_2
+\]</span></p>
 
 </div>
 </div>

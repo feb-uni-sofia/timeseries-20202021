@@ -15,3 +15,11 @@ dickey-fuller-unit-root-tests
 no-level-no-trend
 non-zero-level-no-trend
 linear-trend
+monday-1.02.2020-discussion
+differencing
+arima10-1
+arma2-0-3
+arma4-0-2
+model-selection
+goodness-of-fit
+prediction-with-arimap-d-q
